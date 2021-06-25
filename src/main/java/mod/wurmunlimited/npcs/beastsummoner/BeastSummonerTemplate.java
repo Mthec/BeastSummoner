@@ -2,6 +2,7 @@ package mod.wurmunlimited.npcs.beastsummoner;
 
 import com.wurmonline.server.MiscConstants;
 import com.wurmonline.server.creatures.Creature;
+import com.wurmonline.server.creatures.CreatureTemplate;
 import com.wurmonline.server.economy.BeastSummonerEconomy;
 import com.wurmonline.server.items.ItemTemplate;
 import com.wurmonline.server.zones.VolaTile;
@@ -69,6 +70,10 @@ public class BeastSummonerTemplate implements ModCreature {
 
     public static boolean is(Creature creature) {
         return creature.getTemplateId() == templateId;
+    }
+
+    public static boolean is(CreatureTemplate template) {
+        return template.getTemplateId() == templateId;
     }
 
     public static Creature createNewSummoner(VolaTile tile, int floorLevel, String name, byte sex, byte kingdom, @Nullable ItemTemplate currency, String tag) throws Exception {

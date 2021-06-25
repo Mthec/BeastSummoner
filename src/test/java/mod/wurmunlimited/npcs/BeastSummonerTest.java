@@ -63,7 +63,7 @@ public abstract class BeastSummonerTest {
             //noinspection ResultOfMethodCallIgnored
             file.delete();
         }
-        // TODO - Tag loading.
+
         file = new File("sqlite/tags.db");
         if (file.exists()) {
             //noinspection ResultOfMethodCallIgnored

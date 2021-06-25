@@ -3,6 +3,7 @@ package com.wurmonline.server.creatures;
 import com.wurmonline.server.Items;
 import com.wurmonline.server.economy.MonetaryConstants;
 import com.wurmonline.server.items.*;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 
 import java.io.IOException;
@@ -78,4 +79,19 @@ public abstract class BeastSummonerTradeHandler extends TradeHandler {
 
     @Override
     abstract void balance();
+
+    public static TradeHandler create(Creature creature, Trade trade) {
+        SummonerProfile profile = BeastSummonerMod.mod.db.getProfileFor(creature);
+
+        if (profile == null) {
+            logger.warning("BeastSummonerTradeHandler.create was called but no profile was found.");
+            return null;
+        }
+
+        if (profile.acceptsCoin) {
+            return new BeastSummonerTradeHandlerCoins(creature, trade);
+        } else {
+            return new BeastSummonerTradeHandlerCurrency(creature, trade);
+        }
+    }
 }

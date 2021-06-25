@@ -289,7 +289,7 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
             try {
                 BeastSummonerMod.mod.db.deleteSummoner(summoner);
             } catch (SQLException e) {
-                logger.warning("Failed to delete stock when dismissing summoner (" + summoner.getName() + ").  Some entries may still remain.");
+                logger.warning("Failed to delete summon options when dismissing summoner (" + summoner.getName() + ").  Some entries may still remain.");
                 e.printStackTrace();
             }
             summoner.destroy();

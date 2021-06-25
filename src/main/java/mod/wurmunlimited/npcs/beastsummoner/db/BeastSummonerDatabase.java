@@ -11,10 +11,8 @@ import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 import mod.wurmunlimited.npcs.db.Database;
 import org.jetbrains.annotations.Nullable;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.io.File;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,11 +26,12 @@ public class BeastSummonerDatabase extends Database {
         FailedToUpdateTagException() {}
     }
     private static final Logger logger = Logger.getLogger(BeastSummonerDatabase.class.getName());
-
+    private final String tagDumpDbString = "mods/beastsummoner/tags.db";
     private final Map<Creature, SummonerProfile> allProfiles = new HashMap<>();
     private final Map<Creature, List<SummonOption>> allOptions = new HashMap<>();
     private final Map<Creature, String> allTags = new HashMap<>();
     private final Map<String, List<SummonOption>> allTagOptions = new HashMap<>();
+
     public BeastSummonerDatabase(String dbName) {
         super(dbName);
         loadData();
@@ -66,11 +65,36 @@ public class BeastSummonerDatabase extends Database {
                                     "UNIQUE(tag, template));").execute();
     }
 
+    @SuppressWarnings({"SqlResolve", "SqlInsertValues"})
+    public void loadTags() throws SQLException {
+        File file = new File(tagDumpDbString);
+        if (file.exists()) {
+            execute(db -> {
+                db.prepareStatement("ATTACH DATABASE '" + tagDumpDbString + "' AS dump;").execute();
+                db.prepareStatement("INSERT OR IGNORE INTO main.tag_options SELECT * FROM dump.tag_options;").execute();
+                db.prepareStatement("DETACH dump;").execute();
+            });
+
+            loadTagData();
+        }
+    }
+
+    @SuppressWarnings("SqlResolve")
+    public void dumpTags() throws SQLException {
+        Connection db2 = DriverManager.getConnection("jdbc:sqlite:" + tagDumpDbString);
+        db2.close();
+        execute(db -> {
+            db.prepareStatement("ATTACH DATABASE '" + tagDumpDbString + "' AS dump;").execute();
+            db.prepareStatement("DROP TABLE IF EXISTS dump.tag_options;").execute();
+            db.prepareStatement("CREATE TABLE dump.tag_options AS SELECT * FROM main.tag_options;").execute();
+            db.prepareStatement("DETACH dump;").execute();
+        });
+    }
+
     @SuppressWarnings("DuplicatedCode")
     void loadData() {
         allProfiles.clear();
         allOptions.clear();
-        allTags.clear();
 
         try {
             execute(db -> {
@@ -141,29 +165,38 @@ public class BeastSummonerDatabase extends Database {
                     optionsList.add(new SummonOption(creatureTemplate, price, cap));
                 }
 
-                ResultSet tagOptions = db.prepareStatement("SELECT * FROM tag_options;").executeQuery();
-                while (tagOptions.next()) {
-                    String tag = tagOptions.getString(1);
-                    int templateId = tagOptions.getInt(2);
-                    int cap = tagOptions.getInt(3);
-                    int price = tagOptions.getInt(4);
-                    CreatureTemplate creatureTemplate;
-                    try {
-                        creatureTemplate = CreatureTemplateFactory.getInstance().getTemplate(templateId);
-                    } catch (NoSuchCreatureTemplateException e) {
-                        logger.warning("Creature template not found (" + templateId + "), ignoring option.");
-                        e.printStackTrace();
-                        continue;
-                    }
-
-                    List<SummonOption> optionsList = allTagOptions.computeIfAbsent(tag, k -> new ArrayList<>());
-                    optionsList.add(new SummonOption(creatureTemplate, price, cap));
-                }
+                loadTagData();
             });
         } catch (SQLException e) {
             logger.warning("Error occurred when loading summoner data, other data may not have been loaded.");
             e.printStackTrace();
         }
+    }
+
+    @SuppressWarnings("DuplicatedCode")
+    private void loadTagData() throws SQLException {
+        allTagOptions.clear();
+
+        execute(db -> {
+            ResultSet tagOptions = db.prepareStatement("SELECT * FROM tag_options;").executeQuery();
+            while (tagOptions.next()) {
+                String tag = tagOptions.getString(1);
+                int templateId = tagOptions.getInt(2);
+                int cap = tagOptions.getInt(3);
+                int price = tagOptions.getInt(4);
+                CreatureTemplate creatureTemplate;
+                try {
+                    creatureTemplate = CreatureTemplateFactory.getInstance().getTemplate(templateId);
+                } catch (NoSuchCreatureTemplateException e) {
+                    logger.warning("Creature template not found (" + templateId + "), ignoring option.");
+                    e.printStackTrace();
+                    continue;
+                }
+
+                List<SummonOption> optionsList = allTagOptions.computeIfAbsent(tag, k -> new ArrayList<>());
+                optionsList.add(new SummonOption(creatureTemplate, price, cap));
+            }
+        });
     }
 
     private void addNew(Creature creature, VolaTile spawn, int floorLevel, int range, int currency, String tag) throws SQLException {

@@ -5,8 +5,8 @@ import com.wurmonline.server.items.Item;
 import com.wurmonline.server.questions.PlaceBeastSummonerQuestion;
 import com.wurmonline.server.zones.VolaTile;
 
-public class PlaceBeastSummonerMenuEntry implements NpcMenuEntry {
-    public PlaceBeastSummonerMenuEntry() {
+public class PlaceBeastSummonerAction implements NpcMenuEntry {
+    public PlaceBeastSummonerAction() {
         PlaceNpcMenu.addNpcAction(this);
     }
 
@@ -17,7 +17,7 @@ public class PlaceBeastSummonerMenuEntry implements NpcMenuEntry {
 
     @Override
     public boolean doAction(Action action, short num, Creature performer, Item source, VolaTile tile, int floorLevel) {
-        new PlaceBeastSummonerQuestion(performer, tile, floorLevel);
+        new PlaceBeastSummonerQuestion(performer, tile, floorLevel).sendQuestion();
         return true;
     }
 }

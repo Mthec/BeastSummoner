@@ -49,7 +49,7 @@ public class BeastSummonerDatabase extends Database {
                                     "floor_level INTEGER NOT NULL," +
                                     "currency INTEGER NOT NULL," +
                                     "tag TEXT NOT NULL" +
-                                    ");");
+                                    ");").execute();
 
         db.prepareStatement("CREATE TABLE IF NOT EXISTS options (" +
                                     "id INTEGER NOT NULL," +
@@ -66,6 +66,7 @@ public class BeastSummonerDatabase extends Database {
                                     "UNIQUE(tag, template));").execute();
     }
 
+    @SuppressWarnings("DuplicatedCode")
     void loadData() {
         allProfiles.clear();
         allOptions.clear();
@@ -165,7 +166,7 @@ public class BeastSummonerDatabase extends Database {
         }
     }
 
-    public void addNew(Creature creature, VolaTile spawn, int floorLevel, int range, int currency, String tag) throws SQLException {
+    private void addNew(Creature creature, VolaTile spawn, int floorLevel, int range, int currency, String tag) throws SQLException {
         execute(db -> {
             PreparedStatement ps = db.prepareStatement("INSERT OR IGNORE INTO summoner (id, x, y, surfaced, floor_level, range, currency, tag) VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
             ps.setLong(1, creature.getWurmId());
@@ -180,8 +181,14 @@ public class BeastSummonerDatabase extends Database {
         });
     }
 
+    public void addNew(Creature creature, VolaTile spawn, int floorLevel, int range, ItemTemplate currency, String tag) throws SQLException {
+        addNew(creature, spawn, floorLevel, range, currency.getTemplateId(), tag);
+        allProfiles.put(creature, new SummonerProfile(spawn, floorLevel, range, currency));
+    }
+
     public void addNew(Creature creature, VolaTile spawn, int floorLevel, int range, String tag) throws SQLException {
         addNew(creature, spawn, floorLevel, range, -1, tag);
+        allProfiles.put(creature, new SummonerProfile(spawn, floorLevel, range));
     }
 
     public List<String> getAllTags() {
@@ -198,6 +205,10 @@ public class BeastSummonerDatabase extends Database {
             return allTagOptions.get(tag);
         }
         return allOptions.get(summoner);
+    }
+
+    public String getTagFor(Creature summoner) {
+        return allTags.get(summoner);
     }
 
     public void updateTag(Creature summoner, String tag) throws FailedToUpdateTagException {
@@ -238,6 +249,15 @@ public class BeastSummonerDatabase extends Database {
         } else {
             logger.warning("Attempted to set spawn for non-existent summoner profile " + summoner.getName() + " (" + summoner.getWurmId() + ").");
         }
+    }
+
+    public void setCurrencyFor(Creature summoner, int currency) throws SQLException {
+        execute(db -> {
+            PreparedStatement ps = db.prepareStatement("UPDATE summoner SET currency=? WHERE id=?;");
+            ps.setInt(1, currency);
+            ps.setLong(2, summoner.getWurmId());
+            ps.execute();
+        });
     }
 
     public void deleteSummoner(Creature summoner) throws SQLException {

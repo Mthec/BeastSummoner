@@ -8,8 +8,19 @@ import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 import java.util.logging.Level;
 
 public class BeastSummonerTradeHandlerCurrency extends BeastSummonerTradeHandler {
-    public BeastSummonerTradeHandlerCurrency(Creature summoner, Trade trade, SummonerProfile profile, String summonName, int price) {
-        super(summoner, trade, profile, summonName, price);
+    private SummonerProfile profile;
+    private int price = 0;
+
+    public BeastSummonerTradeHandlerCurrency(Creature summoner, Trade trade) {
+        super(summoner, trade);
+    }
+
+    @Override
+    public void createTradeItem(SummonerProfile profile, String summonName, int price) {
+        super.createTradeItem(profile, summonName, price);
+        this.profile = profile;
+        this.price += price;
+        assert profile.currency != null;
     }
 
     @Override
@@ -20,7 +31,7 @@ public class BeastSummonerTradeHandlerCurrency extends BeastSummonerTradeHandler
                 TradingWindow sellWindow = trade.getTradingWindow(3);
                 TradingWindow requestWindow = trade.getTradingWindow(4);
 
-                int diff = sellWindow.getAllItems().length - price;
+                int diff = price - requestWindow.getItems().length;
                 if (logger.isLoggable(Level.FINEST)) {
                     logger.finest("diff is " + diff);
                 }
@@ -35,7 +46,7 @@ public class BeastSummonerTradeHandlerCurrency extends BeastSummonerTradeHandler
                         Item first = requestWindow.getItems()[0];
                         requestWindow.removeItem(first);
                         offerWindow.addItem(first);
-                        --diff;
+                        ++diff;
                     }
                 }
 

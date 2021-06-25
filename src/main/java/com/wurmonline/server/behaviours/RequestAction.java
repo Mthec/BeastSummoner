@@ -2,6 +2,7 @@ package com.wurmonline.server.behaviours;
 
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.Item;
+import com.wurmonline.server.players.Player;
 import com.wurmonline.server.questions.BeastSummonerRequestQuestion;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTemplate;
 import org.gotti.wurmunlimited.modsupport.actions.*;
@@ -35,8 +36,8 @@ public class RequestAction implements ModAction, ActionPerformer, BehaviourProvi
 
     @Override
     public boolean action(Action action, Creature performer, Creature target, short num, float counter) {
-        if (BeastSummonerTemplate.is(target)) {
-            new BeastSummonerRequestQuestion(performer, target).sendQuestion();
+        if (performer.isPlayer() && BeastSummonerTemplate.is(target)) {
+            new BeastSummonerRequestQuestion((Player)performer, target).sendQuestion();
         }
 
         return true;

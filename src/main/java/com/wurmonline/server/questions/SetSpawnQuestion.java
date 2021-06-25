@@ -145,5 +145,7 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
                              .text("How far in tiles the summoner will spawn beasts from this point.")
                              .harray(b -> b.button("submit", "Send").spacer().button("survey", "Survey Area").spacer().button("cancel", "Cancel"))
                              .build();
+
+        getResponder().getCommunicator().sendBml(250, 300, true, true, bml, 200, 200, 200, title);
     }
 }

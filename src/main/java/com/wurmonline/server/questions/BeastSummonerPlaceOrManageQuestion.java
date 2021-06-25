@@ -12,6 +12,7 @@ import com.wurmonline.shared.util.StringUtilities;
 import mod.wurmunlimited.bml.BML;
 import mod.wurmunlimited.npcs.FaceSetters;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
+import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 import mod.wurmunlimited.npcs.beastsummoner.db.BeastSummonerDatabase;
 import mod.wurmunlimited.npcs.db.FaceSetterDatabase;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
     private final FaceSetterQuestionHelper face;
     private final ModelSetterQuestionHelper model;
     private final boolean isNew;
+    protected Template template;
 
     private BeastSummonerPlaceOrManageQuestion(Creature responder, String title, long target, @Nullable Creature summoner) {
         super(responder, title, "", MANAGETRADER, target);
@@ -41,6 +43,8 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
         face = new FaceSetterQuestionHelper(BeastSummonerMod.mod.faceSetter, summoner);
         model = new ModelSetterQuestionHelper(BeastSummonerMod.mod.modelSetter, summoner, "Trader");
         isNew = summoner == null;
+        EligibleTemplates.init();
+        template = Template._default();
     }
 
     protected BeastSummonerPlaceOrManageQuestion(Creature responder, String title, long target) {
@@ -210,6 +214,46 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
             }
 
             getResponder().getCommunicator().sendNormalServerMessage(sb.toString());
+        }
+    }
+
+    protected boolean doFilter() {
+        if (wasSelected("do_filter")) {
+            String filter = getStringOrDefault("filter", "");
+            template = new Template(0, filter);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    protected int getCurrencyIndex() {
+        int newTemplateIndex = getIntegerOrDefault("template", template.templateIndex);
+        if (newTemplateIndex != template.templateIndex) {
+            try {
+                template = new Template(template, newTemplateIndex);
+            } catch (ArrayIndexOutOfBoundsException ignored) {}
+        }
+
+        return newTemplateIndex;
+    }
+
+    protected void checkSaveCurrency(Creature summoner) {
+        int currency = getCurrencyIndex();
+        SummonerProfile profile = BeastSummonerMod.mod.db.getProfileFor(summoner);
+        if (profile == null) {
+            logger.warning(summoner.getName() + "'s profile was null during checkSaveCurrency.");
+            return;
+        }
+        if (profile.currency != null && profile.currency.getTemplateId() != currency) {
+            try {
+                BeastSummonerMod.mod.db.setCurrencyFor(summoner, currency);
+                getResponder().getCommunicator().sendNormalServerMessage("The summoner made a note of which currency to use.");
+            } catch (SQLException e) {
+                logger.warning("Error when updating summoner (" + summoner.getWurmId() + ") currency to " + currency + ".");
+                getResponder().getCommunicator().sendNormalServerMessage("The summoner gets lost in thought and forgets about using a different currency.");
+            }
         }
     }
 

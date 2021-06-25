@@ -8,6 +8,7 @@ val shortName = "beastsummoner"
 val wurmServerFolder = "E:/Steam/steamapps/common/Wurm Unlimited/WurmServerLauncher/"
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -16,8 +17,9 @@ dependencies {
     implementation(project(":BMLBuilder"))
     implementation(project(":PlaceNpc"))
     implementation(project(":CreatureCustomiser"))
-    implementation(fileTree(wurmServerFolder) { include("server.jar") })
-    implementation(fileTree(wurmServerFolder) { include("modlauncher.jar", "javassist.jar") })
+    implementation(project(":TradeLibrary"))
+    implementation("com.wurmonline:server:1.9")
+    implementation("org.gotti.wurmunlimited:server-modlauncher:0.45")
 }
 
 configure<JavaPluginConvention> {

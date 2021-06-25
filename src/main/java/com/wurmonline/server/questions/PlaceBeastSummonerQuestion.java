@@ -12,14 +12,11 @@ import java.util.Properties;
 public class PlaceBeastSummonerQuestion extends BeastSummonerPlaceOrManageQuestion {
     private final VolaTile tile;
     private final int floorLevel;
-    private Template template;
 
     public PlaceBeastSummonerQuestion(Creature responder, VolaTile tile, int floorLevel) {
         super(responder, "Set up Beast Summoner", -10);
         this.tile = tile;
         this.floorLevel = floorLevel;
-        EligibleTemplates.init();
-        template = Template._default();
     }
 
     @Override
@@ -27,27 +24,17 @@ public class PlaceBeastSummonerQuestion extends BeastSummonerPlaceOrManageQuesti
         setAnswer(answers);
         Creature responder = getResponder();
 
-        if (wasSelected("do_filter")) {
-            String filter = getStringOrDefault("filter", "");
-            template = new Template(0, filter);
-
+        if (doFilter()) {
             sendQuestion();
         } else {
-            int newTemplateIndex = getIntegerOrDefault("template", template.templateIndex);
-            if (newTemplateIndex != template.templateIndex) {
-                try {
-                    template = new Template(template, newTemplateIndex);
-                } catch (ArrayIndexOutOfBoundsException ignored) {
-                }
-            }
-
+            int newTemplateIndex = getCurrencyIndex();
             byte sex = getGender();
             String name = getName(sex);
             String tag = getTag();
 
             if (locationIsValid(responder, tile)) {
                 try {
-                    Creature summoner = BeastSummonerTemplate.createNewSummoner(tile, floorLevel, name, sex, responder.getKingdomId(), newTemplateIndex == 0 ? -1 : template.itemTemplate.getTemplateId(), tag);
+                    Creature summoner = BeastSummonerTemplate.createNewSummoner(tile, floorLevel, name, sex, responder.getKingdomId(), newTemplateIndex == 0 ? null : template.itemTemplate, tag);
                     logger.info(responder.getName() + " created a summoner: " + summoner.getWurmId());
                     checkSaveModel(summoner);
                 } catch (SQLException e) {

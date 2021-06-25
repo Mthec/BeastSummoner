@@ -25,7 +25,7 @@ public class SetSpawnAction implements ModAction, ActionPerformer, BehaviourProv
 
     public SetSpawnAction() {
         actionId = (short)ModActions.getNextActionId();
-        actionEntry = new ActionEntryBuilder(actionId, "Cancel", "cancelling").build();
+        actionEntry = new ActionEntryBuilder(actionId, "Set Spawn", "setting spawn").build();
         ModActions.registerAction(actionEntry);
     }
 

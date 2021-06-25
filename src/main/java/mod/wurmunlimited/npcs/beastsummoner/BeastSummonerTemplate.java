@@ -3,11 +3,13 @@ package mod.wurmunlimited.npcs.beastsummoner;
 import com.wurmonline.server.MiscConstants;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.economy.BeastSummonerEconomy;
+import com.wurmonline.server.items.ItemTemplate;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.shared.constants.CreatureTypes;
 import com.wurmonline.shared.constants.ItemMaterials;
 import org.gotti.wurmunlimited.modsupport.CreatureTemplateBuilder;
 import org.gotti.wurmunlimited.modsupport.creatures.ModCreature;
+import org.jetbrains.annotations.Nullable;
 
 public class BeastSummonerTemplate implements ModCreature {
     private static int templateId;
@@ -69,7 +71,7 @@ public class BeastSummonerTemplate implements ModCreature {
         return creature.getTemplateId() == templateId;
     }
 
-    public static Creature createNewSummoner(VolaTile tile, int floorLevel, String name, byte sex, byte kingdom, int currency, String tag) throws Exception {
+    public static Creature createNewSummoner(VolaTile tile, int floorLevel, String name, byte sex, byte kingdom, @Nullable ItemTemplate currency, String tag) throws Exception {
         Creature summoner = Creature.doNew(templateId, (float)(tile.getTileX() << 2) + 2.0F, (float)(tile.getTileY() << 2) + 2.0F, 180.0F, tile.getLayer(), BeastSummonerMod.namePrefix + "_" + name, sex, kingdom);
 
         if (floorLevel != 0) {
@@ -77,7 +79,7 @@ public class BeastSummonerTemplate implements ModCreature {
         }
 
         BeastSummonerEconomy.createShop(summoner.getWurmId());
-        if (currency == -1) {
+        if (currency == null) {
             BeastSummonerMod.mod.db.addNew(summoner, tile, floorLevel, 0, tag);
         } else {
             BeastSummonerMod.mod.db.addNew(summoner, tile, floorLevel, 0, currency, tag);

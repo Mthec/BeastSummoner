@@ -5,14 +5,13 @@ import com.wurmonline.server.economy.Economy;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.items.Trade;
 import com.wurmonline.server.items.TradingWindow;
-import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 
 import java.util.Arrays;
 import java.util.logging.Level;
 
 public class BeastSummonerTradeHandlerCoins extends BeastSummonerTradeHandler {
-    public BeastSummonerTradeHandlerCoins(Creature summoner, Trade trade, SummonerProfile profile, String summonName, int price) {
-        super(summoner, trade, profile, summonName, price);
+    public BeastSummonerTradeHandlerCoins(Creature summoner, Trade trade) {
+        super(summoner, trade);
     }
 
     @Override

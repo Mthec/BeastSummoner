@@ -15,8 +15,9 @@ repositories {
 dependencies {
     testImplementation(project(":WurmTestingHelper"))
     implementation(project(":BMLBuilder"))
-    implementation(project(":PlaceNpc"))
     implementation(project(":CreatureCustomiser"))
+    implementation(project(":PlaceNpc"))
+    implementation(project(":QuestionLibrary"))
     implementation(project(":TradeLibrary"))
     implementation("com.wurmonline:server:1.9")
     implementation("org.gotti.wurmunlimited:server-modlauncher:0.45")

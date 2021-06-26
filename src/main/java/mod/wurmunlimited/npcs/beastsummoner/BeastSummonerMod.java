@@ -36,7 +36,7 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, PlayerMess
     public static final int maxNameLength = 20;
     private static final String dbName = "beast_summoner.db";
     public static BeastSummonerMod mod;
-    public BeastSummonerDatabase db = new BeastSummonerDatabase(dbName);
+    public final BeastSummonerDatabase db = new BeastSummonerDatabase(dbName);
     public FaceSetter faceSetter;
     public ModelSetter modelSetter;
     public static String namePrefix = "Beast_Summoner";

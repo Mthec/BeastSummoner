@@ -4,6 +4,7 @@ import com.wurmonline.server.creatures.*;
 import com.wurmonline.server.items.ItemTemplate;
 import com.wurmonline.server.items.ItemTemplateFactory;
 import com.wurmonline.server.items.NoSuchTemplateException;
+import com.wurmonline.server.questions.CreatureTypeList;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.server.zones.Zones;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
@@ -13,20 +14,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class BeastSummonerDatabase extends Database {
     public static class FailedToUpdateTagException extends Exception {
-
         FailedToUpdateTagException() {}
     }
+
     private static final Logger logger = Logger.getLogger(BeastSummonerDatabase.class.getName());
-    private final String tagDumpDbString = "mods/beastsummoner/tags.db";
+    public String tagDumpDbString = "mods/beastsummoner/tags.db";
     private final Map<Creature, SummonerProfile> allProfiles = new HashMap<>();
     private final Map<Creature, List<SummonOption>> allOptions = new HashMap<>();
     private final Map<Creature, String> allTags = new HashMap<>();
@@ -55,6 +53,7 @@ public class BeastSummonerDatabase extends Database {
                                     "template INTEGER NOT NULL," +
                                     "cap INTEGER NOT NULL," +
                                     "price INTEGER NOT NULL," +
+                                    "types TEXT NOT NULL," +
                                     "UNIQUE(id, template));").execute();
 
         db.prepareStatement("CREATE TABLE IF NOT EXISTS tag_options (" +
@@ -62,6 +61,7 @@ public class BeastSummonerDatabase extends Database {
                                     "template INTEGER NOT NULL," +
                                     "cap INTEGER NOT NULL," +
                                     "price INTEGER NOT NULL," +
+                                    "types TEXT NOT NULL," +
                                     "UNIQUE(tag, template));").execute();
     }
 
@@ -89,6 +89,29 @@ public class BeastSummonerDatabase extends Database {
             db.prepareStatement("CREATE TABLE dump.tag_options AS SELECT * FROM main.tag_options;").execute();
             db.prepareStatement("DETACH dump;").execute();
         });
+    }
+
+    private String typesString(Set<Byte> types) {
+        return types.size() == CreatureTypeList.all.size() ? "all" : types.stream().map(Object::toString).collect(Collectors.joining());
+    }
+
+    private Set<Byte> parseTypes(String types) {
+        Set<Byte> allowedTypes = new HashSet<>();
+
+        if (types.equals("all")) {
+            allowedTypes.addAll(CreatureTypeList.all);
+        } else {
+            String[] parts = types.split(",");
+            for (String part : parts) {
+                try {
+                    allowedTypes.add(Byte.parseByte(part));
+                } catch (NumberFormatException e) {
+                    logger.warning("Unknown creature type byte encountered - " + part);
+                }
+            }
+        }
+
+        return allowedTypes;
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -147,6 +170,7 @@ public class BeastSummonerDatabase extends Database {
                     int templateId = options.getInt(2);
                     int cap = options.getInt(3);
                     int price = options.getInt(4);
+                    String types = options.getString(5);
                     Creature creature = Creatures.getInstance().getCreatureOrNull(id);
                     if (creature == null) {
                         logger.warning("Unknown creature (" + id + ") in database (options), ignoring option.");
@@ -162,7 +186,7 @@ public class BeastSummonerDatabase extends Database {
                     }
 
                     List<SummonOption> optionsList = allOptions.computeIfAbsent(creature, k -> new ArrayList<>());
-                    optionsList.add(new SummonOption(creatureTemplate, price, cap));
+                    optionsList.add(new SummonOption(creatureTemplate, price, cap, parseTypes(types)));
                 }
 
                 loadTagData();
@@ -184,6 +208,7 @@ public class BeastSummonerDatabase extends Database {
                 int templateId = tagOptions.getInt(2);
                 int cap = tagOptions.getInt(3);
                 int price = tagOptions.getInt(4);
+                String types = tagOptions.getString(5);
                 CreatureTemplate creatureTemplate;
                 try {
                     creatureTemplate = CreatureTemplateFactory.getInstance().getTemplate(templateId);
@@ -194,7 +219,7 @@ public class BeastSummonerDatabase extends Database {
                 }
 
                 List<SummonOption> optionsList = allTagOptions.computeIfAbsent(tag, k -> new ArrayList<>());
-                optionsList.add(new SummonOption(creatureTemplate, price, cap));
+                optionsList.add(new SummonOption(creatureTemplate, price, cap, parseTypes(types)));
             }
         });
     }
@@ -238,6 +263,88 @@ public class BeastSummonerDatabase extends Database {
             return allTagOptions.get(tag);
         }
         return allOptions.get(summoner);
+    }
+
+    public SummonOption addOption(Creature summoner, CreatureTemplate template, int price, int cap, Set<Byte> allowedTypes) throws SQLException {
+        execute(db -> {
+            PreparedStatement ps = db.prepareStatement("INSERT OR IGNORE INTO options (id, template, cap, price, types) VALUES(?, ?, ?, ?, ?);");
+            ps.setLong(1, summoner.getWurmId());
+            ps.setInt(2, template.getTemplateId());
+            ps.setInt(3, cap);
+            ps.setInt(4, price);
+            ps.setString(5, typesString(allowedTypes));
+            ps.execute();
+        });
+
+        List<SummonOption> options = allOptions.computeIfAbsent(summoner, k -> new ArrayList<>());
+        SummonOption option = new SummonOption(template, price, cap, new HashSet<>(allowedTypes));
+        options.add(option);
+        return option;
+    }
+
+    public SummonOption addOption(String tag, CreatureTemplate template, int price, int cap, Set<Byte> allowedTypes) throws SQLException {
+        execute(db -> {
+            PreparedStatement ps = db.prepareStatement("INSERT OR IGNORE INTO tag_options (tag, template, cap, price, types) VALUES(?, ?, ?, ?, ?);");
+            ps.setString(1, tag);
+            ps.setInt(2, template.getTemplateId());
+            ps.setInt(3, cap);
+            ps.setInt(4, price);
+            ps.setString(5, typesString(allowedTypes));
+            ps.execute();
+        });
+
+        List<SummonOption> options = allTagOptions.computeIfAbsent(tag, k -> new ArrayList<>());
+        SummonOption option = new SummonOption(template, price, cap, new HashSet<>(allowedTypes));
+        options.add(option);
+        return option;
+    }
+
+
+    public SummonOption updateOption(Creature summoner, @Nullable SummonOption oldOption, CreatureTemplate template, int price, int cap, Set<Byte> allowedTypes) throws SQLException {
+        boolean updated = false;
+        String tag = allTags.get(summoner);
+        List<SummonOption> options;
+        if (tag != null) {
+            if (oldOption == null) {
+                return addOption(tag, template, price, cap, allowedTypes);
+            } else {
+                options = allTagOptions.computeIfAbsent(tag, k -> new ArrayList<>());
+                execute(db -> {
+                    PreparedStatement ps = db.prepareStatement("UPDATE tag_options SET template=?, cap=?, price=?, types=? WHERE tag=?;");
+                    ps.setInt(1, template.getTemplateId());
+                    ps.setInt(2, cap);
+                    ps.setInt(3, price);
+                    ps.setString(4, typesString(allowedTypes));
+                    ps.setString(5, tag);
+                    ps.execute();
+                });
+            }
+        } else {
+            if (oldOption == null) {
+                return addOption(summoner, template, price, cap, allowedTypes);
+            } else {
+                options = allOptions.computeIfAbsent(summoner, k -> new ArrayList<>());
+                execute(db -> {
+                    PreparedStatement ps = db.prepareStatement("UPDATE options SET template=?, cap=?, price=?, types=? WHERE id=?;");
+                    ps.setInt(1, template.getTemplateId());
+                    ps.setInt(2, cap);
+                    ps.setInt(3, price);
+                    ps.setString(4, typesString(allowedTypes));
+                    ps.setLong(5, summoner.getWurmId());
+                    ps.execute();
+                });
+            }
+        }
+
+        SummonOption newOption = new SummonOption(template, price, cap, allowedTypes);
+        int index = options.indexOf(oldOption);
+        if (index >= 0){
+            options.set(index, newOption);
+        } else {
+            logger.warning("Could not find index of expected summon option.");
+            options.add(newOption);
+        }
+        return newOption;
     }
 
     public String getTagFor(Creature summoner) {
@@ -284,13 +391,17 @@ public class BeastSummonerDatabase extends Database {
         }
     }
 
-    public void setCurrencyFor(Creature summoner, int currency) throws SQLException {
+    public void setCurrencyFor(Creature summoner, int currency) throws SQLException, NoSuchTemplateException {
         execute(db -> {
             PreparedStatement ps = db.prepareStatement("UPDATE summoner SET currency=? WHERE id=?;");
             ps.setInt(1, currency);
             ps.setLong(2, summoner.getWurmId());
             ps.execute();
         });
+
+        SummonerProfile oldProfile = allProfiles.get(summoner);
+        ItemTemplate currencyTemplate = ItemTemplateFactory.getInstance().getTemplate(currency);
+        allProfiles.put(summoner, new SummonerProfile(oldProfile.spawnPointCentre, oldProfile.floorLevel, oldProfile.range, currencyTemplate));
     }
 
     public void deleteSummoner(Creature summoner) throws SQLException {

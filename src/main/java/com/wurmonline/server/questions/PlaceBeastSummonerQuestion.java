@@ -14,7 +14,7 @@ public class PlaceBeastSummonerQuestion extends BeastSummonerPlaceOrManageQuesti
     private final int floorLevel;
 
     public PlaceBeastSummonerQuestion(Creature responder, VolaTile tile, int floorLevel) {
-        super(responder, "Set up Beast Summoner", -10);
+        super(responder);
         this.tile = tile;
         this.floorLevel = floorLevel;
     }
@@ -27,14 +27,13 @@ public class PlaceBeastSummonerQuestion extends BeastSummonerPlaceOrManageQuesti
         if (doFilter()) {
             sendQuestion();
         } else {
-            int newTemplateIndex = getCurrencyIndex();
             byte sex = getGender();
             String name = getName(sex);
             String tag = getTag();
 
             if (locationIsValid(responder, tile)) {
                 try {
-                    Creature summoner = BeastSummonerTemplate.createNewSummoner(tile, floorLevel, name, sex, responder.getKingdomId(), newTemplateIndex == 0 ? null : template.itemTemplate, tag);
+                    Creature summoner = BeastSummonerTemplate.createNewSummoner(tile, floorLevel, name, sex, responder.getKingdomId(), getCurrencyTemplate(), tag);
                     logger.info(responder.getName() + " created a summoner: " + summoner.getWurmId());
                     checkSaveModel(summoner);
                 } catch (SQLException e) {
@@ -54,18 +53,7 @@ public class PlaceBeastSummonerQuestion extends BeastSummonerPlaceOrManageQuesti
                           .text("Place Beast Summoner").bold()
                           .text("Place an NPC that will offer creature summoning services.")
                           .text("This trader will only accept a certain type of item in exchange for goods.");
-        bml = middleBML(bml, "")
-                      .text("Currency:")
-                      .text("Filter available templates:")
-                      .text("* is a wildcard that stands in for one or more characters.\ne.g. *clay* to find all clay items or lump* to find all types of lump.")
-                      .text("Select the top entry for normal money instead.")
-                      .newLine()
-                      .harray(b -> b.dropdown("template", "Money," + template.getOptions(), template.templateIndex + 1)
-                                           .spacer().label("Filter:")
-                                           .entry("filter", template.filter, 10).spacer()
-                                           .button("do_filter", "Apply"))
-                      .newLine();
 
-        getResponder().getCommunicator().sendBml(450, 400, true, true, endBML(bml), 200, 200, 200, title);
+        getResponder().getCommunicator().sendBml(450, 400, true, true, endBML(middleBML(bml, "")), 200, 200, 200, title);
     }
 }

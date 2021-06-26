@@ -15,7 +15,7 @@ public class BeastSummonerManagementQuestion extends BeastSummonerPlaceOrManageQ
     private final String currentTag;
 
     protected BeastSummonerManagementQuestion(Creature responder, Creature summoner) {
-        super(responder, "Manage Beast Summoner", summoner);
+        super(responder, summoner);
         this.summoner = summoner;
         currentTag = BeastSummonerMod.mod.db.getTagFor(summoner);
     }
@@ -31,6 +31,8 @@ public class BeastSummonerManagementQuestion extends BeastSummonerPlaceOrManageQ
             checkSaveModel(summoner);
             checkSaveCurrency(summoner);
             checkSaveTag(summoner, currentTag);
+        } else if (wasSelected("list")) {
+            new BeastSummonerSummonsListQuestion(getResponder(), summoner).sendQuestion();
         }
     }
 

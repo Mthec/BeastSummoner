@@ -9,13 +9,14 @@ import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 
 import java.util.Collections;
+import java.util.HashSet;
 
 public class ExampleSummonerRequest {
     public static SummonRequest exampleSummon(Creature summoner, Player player, SummonerProfile profile) {
         try {
             return new SummonRequest(summoner, player, profile,
                     Collections.singletonList(new SummonRequest.SummonRequestDetails(
-                            new SummonOption(CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.ANACONDA_CID), 1, 10),
+                            new SummonOption(CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.ANACONDA_CID), 1, 10, new HashSet<>(CreatureTypeList.all)),
                             (byte)0, (byte)0, 2)));
         } catch (NoSuchCreatureTemplateException e) {
             throw new RuntimeException(e);

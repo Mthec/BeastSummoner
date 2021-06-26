@@ -9,7 +9,9 @@ import com.wurmonline.server.structures.Structure;
 import com.wurmonline.server.structures.Structures;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.server.zones.Zones;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,13 +22,15 @@ public class SummonOption {
     public final byte kingdom;
     public final int price;
     public final int cap;
+    public final Set<Byte> allowedTypes;
 
-    public SummonOption(CreatureTemplate template, int price, int cap) {
+    public SummonOption(@NotNull CreatureTemplate template, int price, int cap, Set<Byte> allowedTypes) {
         this.template = template;
         this.price = price;
         this.cap = cap;
         this.gender = template.getSex();
         this.kingdom = 0;
+        this.allowedTypes = allowedTypes;
     }
 
     public void summon(Creature summoner, Player requester, SummonerProfile profile, byte creatureType, int amount, byte age) {
@@ -84,7 +88,7 @@ public class SummonOption {
                 }
 
                 byte creType = 0;
-                if (template.hasDen() || template.isRiftCreature()) {
+                if (allowedTypes.contains(creatureType) && (template.hasDen() || template.isRiftCreature())) {
                     creType = creatureType;
                 }
 
@@ -123,38 +127,55 @@ public class SummonOption {
                 } else if (newCreature.getTemplate().isColoured) {
                     newCreature.setVisible(false);
                     int randomColour = Server.rand.nextInt(newCreature.getTemplate().maxColourCount);
-                    if (randomColour == 1) {
-                        newCreature.getStatus().setTraitBit(15, true);
-                    } else if (randomColour == 2) {
-                        newCreature.getStatus().setTraitBit(16, true);
-                    } else if (randomColour == 3) {
-                        newCreature.getStatus().setTraitBit(17, true);
-                    } else if (randomColour == 4) {
-                        newCreature.getStatus().setTraitBit(18, true);
-                    } else if (randomColour == 5) {
-                        newCreature.getStatus().setTraitBit(24, true);
-                    } else if (randomColour == 6) {
-                        newCreature.getStatus().setTraitBit(25, true);
-                    } else if (randomColour == 7) {
-                        newCreature.getStatus().setTraitBit(23, true);
-                    } else if (randomColour == 8) {
-                        newCreature.getStatus().setTraitBit(30, true);
-                    } else if (randomColour == 9) {
-                        newCreature.getStatus().setTraitBit(31, true);
-                    } else if (randomColour == 10) {
-                        newCreature.getStatus().setTraitBit(32, true);
-                    } else if (randomColour == 11) {
-                        newCreature.getStatus().setTraitBit(33, true);
-                    } else if (randomColour == 12) {
-                        newCreature.getStatus().setTraitBit(34, true);
-                    } else if (randomColour == 13) {
-                        newCreature.getStatus().setTraitBit(35, true);
-                    } else if (randomColour == 14) {
-                        newCreature.getStatus().setTraitBit(36, true);
-                    } else if (randomColour == 15) {
-                        newCreature.getStatus().setTraitBit(37, true);
-                    } else if (randomColour == 16) {
-                        newCreature.getStatus().setTraitBit(38, true);
+                    switch (randomColour) {
+                        case 1:
+                            newCreature.getStatus().setTraitBit(15, true);
+                            break;
+                        case 2:
+                            newCreature.getStatus().setTraitBit(16, true);
+                            break;
+                        case 3:
+                            newCreature.getStatus().setTraitBit(17, true);
+                            break;
+                        case 4:
+                            newCreature.getStatus().setTraitBit(18, true);
+                            break;
+                        case 5:
+                            newCreature.getStatus().setTraitBit(24, true);
+                            break;
+                        case 6:
+                            newCreature.getStatus().setTraitBit(25, true);
+                            break;
+                        case 7:
+                            newCreature.getStatus().setTraitBit(23, true);
+                            break;
+                        case 8:
+                            newCreature.getStatus().setTraitBit(30, true);
+                            break;
+                        case 9:
+                            newCreature.getStatus().setTraitBit(31, true);
+                            break;
+                        case 10:
+                            newCreature.getStatus().setTraitBit(32, true);
+                            break;
+                        case 11:
+                            newCreature.getStatus().setTraitBit(33, true);
+                            break;
+                        case 12:
+                            newCreature.getStatus().setTraitBit(34, true);
+                            break;
+                        case 13:
+                            newCreature.getStatus().setTraitBit(35, true);
+                            break;
+                        case 14:
+                            newCreature.getStatus().setTraitBit(36, true);
+                            break;
+                        case 15:
+                            newCreature.getStatus().setTraitBit(37, true);
+                            break;
+                        case 16:
+                            newCreature.getStatus().setTraitBit(38, true);
+                            break;
                     }
 
                     newCreature.setVisible(true);

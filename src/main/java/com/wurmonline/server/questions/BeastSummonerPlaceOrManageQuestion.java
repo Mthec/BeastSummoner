@@ -5,6 +5,8 @@ import com.wurmonline.server.Server;
 import com.wurmonline.server.behaviours.Actions;
 import com.wurmonline.server.behaviours.Methods;
 import com.wurmonline.server.creatures.Creature;
+import com.wurmonline.server.items.ItemTemplate;
+import com.wurmonline.server.items.NoSuchTemplateException;
 import com.wurmonline.server.players.Player;
 import com.wurmonline.server.structures.Structure;
 import com.wurmonline.server.zones.VolaTile;
@@ -34,7 +36,9 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
     private final FaceSetterQuestionHelper face;
     private final ModelSetterQuestionHelper model;
     private final boolean isNew;
-    protected Template template;
+    protected final ItemTemplatesDropdown templates = new ItemTemplatesDropdown();
+    protected int templateIndex = 0;
+    private String filter = "";
 
     private BeastSummonerPlaceOrManageQuestion(Creature responder, String title, long target, @Nullable Creature summoner) {
         super(responder, title, "", MANAGETRADER, target);
@@ -43,16 +47,18 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
         face = new FaceSetterQuestionHelper(BeastSummonerMod.mod.faceSetter, summoner);
         model = new ModelSetterQuestionHelper(BeastSummonerMod.mod.modelSetter, summoner, "Trader");
         isNew = summoner == null;
-        EligibleTemplates.init();
-        template = Template._default();
     }
 
-    protected BeastSummonerPlaceOrManageQuestion(Creature responder, String title, long target) {
-        this(responder, title, target, null);
+    protected BeastSummonerPlaceOrManageQuestion(Creature responder) {
+        this(responder, "Set up Beast Summoner", -10, null);
     }
 
-    protected BeastSummonerPlaceOrManageQuestion(Creature responder, String title, Creature summoner) {
-        this(responder, title, summoner.getWurmId(), summoner);
+    protected BeastSummonerPlaceOrManageQuestion(Creature responder, Creature summoner) {
+        this(responder, "Manage Beast Summoner", summoner.getWurmId(), summoner);
+        SummonerProfile profile = BeastSummonerMod.mod.db.getProfileFor(summoner);
+        if (profile != null) {
+            templateIndex = templates.getIndexOf(profile.currency);
+        }
     }
 
     protected byte getGender() {
@@ -219,8 +225,19 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
 
     protected boolean doFilter() {
         if (wasSelected("do_filter")) {
-            String filter = getStringOrDefault("filter", "");
-            template = new Template(0, filter);
+            ItemTemplate template = null;
+            int index = getPositiveIntegerOrDefault("template", templateIndex);
+            if (index != 0) {
+                template = templates.getTemplateOrNull(index - 1);
+            }
+
+            filter = getStringOrDefault("filter", "");
+            templates.filter(filter);
+            if (template != null) {
+                templateIndex = templates.getIndexOf(template);
+            } else {
+                templateIndex = 0;
+            }
 
             return true;
         }
@@ -228,31 +245,33 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
         return false;
     }
 
-    protected int getCurrencyIndex() {
-        int newTemplateIndex = getIntegerOrDefault("template", template.templateIndex);
-        if (newTemplateIndex != template.templateIndex) {
-            try {
-                template = new Template(template, newTemplateIndex);
-            } catch (ArrayIndexOutOfBoundsException ignored) {}
+    protected @Nullable ItemTemplate getCurrencyTemplate() {
+        int index = getIntegerOrDefault("template", templateIndex);
+        if (index == 0) {
+            return null;
         }
 
-        return newTemplateIndex;
+        return templates.getTemplateOrNull(index - 1);
     }
 
     protected void checkSaveCurrency(Creature summoner) {
-        int currency = getCurrencyIndex();
+        ItemTemplate currency = getCurrencyTemplate();
         SummonerProfile profile = BeastSummonerMod.mod.db.getProfileFor(summoner);
         if (profile == null) {
             logger.warning(summoner.getName() + "'s profile was null during checkSaveCurrency.");
             return;
         }
-        if (profile.currency != null && profile.currency.getTemplateId() != currency) {
+        if (profile.currency != currency) {
             try {
-                BeastSummonerMod.mod.db.setCurrencyFor(summoner, currency);
+                BeastSummonerMod.mod.db.setCurrencyFor(summoner, currency == null ? -1 : currency.getTemplateId());
                 getResponder().getCommunicator().sendNormalServerMessage("The summoner made a note of which currency to use.");
             } catch (SQLException e) {
                 logger.warning("Error when updating summoner (" + summoner.getWurmId() + ") currency to " + currency + ".");
                 getResponder().getCommunicator().sendNormalServerMessage("The summoner gets lost in thought and forgets about using a different currency.");
+            } catch (NoSuchTemplateException e) {
+                logger.warning("Template not found when updating summoner (" + summoner.getWurmId() + ") currency to " + currency + ".");
+                getResponder().getCommunicator().sendNormalServerMessage("The summoner doesn't understand which currency you want to be used.");
+                e.printStackTrace();
             }
         }
     }
@@ -315,7 +334,18 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
         return bml
                        .harray(b -> b.label("Tag:").entry("tag", currentTag, BeastSummonerMod.maxTagLength))
                        .text(" - or - ")
-                       .harray(b -> b.dropdown("tags", Joiner.on(",").join(allTags)).spacer().button("edit", "Edit Tags"));
+                       .harray(b -> b.dropdown("tags", Joiner.on(",").join(allTags)).spacer().button("edit", "Edit Tags"))
+                       .newLine()
+                       .text("Currency:")
+                       .text("Filter available templates:")
+                       .text("* is a wildcard that stands in for one or more characters.\ne.g. *clay* to find all clay items or lump* to find all types of lump.")
+                       .text("Select the top entry for normal money instead.")
+                       .newLine()
+                       .harray(b -> b.dropdown("template", "Money," + templates.getTemplatesString(), templateIndex)
+                                            .spacer().label("Filter:")
+                                            .entry("filter", filter, 10).spacer()
+                                            .button("do_filter", "Apply"))
+                       .newLine();
     }
 
     protected String endBML(BML bml) {
@@ -333,10 +363,10 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
     protected String endBML(BML bml, String currentTag, Creature summoner) {
         return addTagSelector(bml, currentTag)
                        .harray(b -> b
-                                            .button("confirm", "Confirm").spacer()
-                                            .button("list", "Summons List").spacer()
-                                            .button("dismiss", "Dismiss").confirm("Dismiss summoner", "Are you sure you wish to dismiss " + summoner.getName() + "?").spacer()
-                                            .button("cancel", "Cancel").spacer())
+                            .button("confirm", "Confirm").spacer()
+                            .button("list", "Summons List").spacer()
+                            .button("dismiss", "Dismiss").confirm("Dismiss summoner", "Are you sure you wish to dismiss " + summoner.getName() + "?").spacer()
+                            .button("cancel", "Cancel").spacer())
                        .build();
     }
 }

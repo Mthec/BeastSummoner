@@ -1,4 +1,4 @@
-package mod.wurmunlimited.npcs;
+package mod.wurmunlimited.npcs.beastsummoner;
 
 import com.wurmonline.server.Constants;
 import com.wurmonline.server.behaviours.PlaceBeastSummonerAction;
@@ -7,10 +7,8 @@ import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.players.Player;
 import com.wurmonline.server.questions.ExampleSummonerRequest;
 import com.wurmonline.server.questions.SummonRequest;
-import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
-import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTemplate;
-import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
-import mod.wurmunlimited.npcs.beastsummoner.db.BeastSummonerDatabase;
+import mod.wurmunlimited.npcs.FaceSetter;
+import mod.wurmunlimited.npcs.ModelSetter;
 import mod.wurmunlimited.npcs.db.Database;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.junit.jupiter.api.AfterEach;
@@ -77,10 +75,7 @@ public abstract class BeastSummonerTest {
 
             BeastSummonerMod mod = BeastSummonerMod.mod;
             if (mod != null) {
-                BeastSummonerDatabase db = mod.db;
-                if (db != null) {
-                    ReflectionUtil.setPrivateField(db, Database.class.getDeclaredField("created"), false);
-                }
+                ReflectionUtil.setPrivateField(mod.db, Database.class.getDeclaredField("created"), false);
             }
         } catch(Exception e){
             throw new RuntimeException(e);

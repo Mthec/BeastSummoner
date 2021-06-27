@@ -19,7 +19,7 @@ public class SummonOption {
     private static final Logger logger = Logger.getLogger(SummonOption.class.getName());
     public final CreatureTemplate template;
     public final int gender;
-    public final byte kingdom;
+    public final byte kingdom = 0;
     public final int price;
     public final int cap;
     public final Set<Byte> allowedTypes;
@@ -29,7 +29,6 @@ public class SummonOption {
         this.price = price;
         this.cap = cap;
         this.gender = template.getSex();
-        this.kingdom = 0;
         this.allowedTypes = allowedTypes;
     }
 

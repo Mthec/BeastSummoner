@@ -136,8 +136,8 @@ public class BeastSummonerDatabase extends Database {
                             continue;
                         }
 
-                        int floorLevel = profiles.getInt(5);
-                        int range = profiles.getInt(6);
+                        int range = profiles.getInt(5);
+                        int floorLevel = profiles.getInt(6);
                         int currency = profiles.getInt(7);
                         String tag = profiles.getString(8);
 
@@ -237,6 +237,10 @@ public class BeastSummonerDatabase extends Database {
             ps.setString(8, tag);
             ps.execute();
         });
+
+        if (!tag.isEmpty()) {
+            allTags.put(creature, tag);
+        }
     }
 
     public void addNew(Creature creature, VolaTile spawn, int floorLevel, int range, ItemTemplate currency, String tag) throws SQLException {
@@ -250,7 +254,7 @@ public class BeastSummonerDatabase extends Database {
     }
 
     public List<String> getAllTags() {
-        return allTags.values().stream().sorted().collect(Collectors.toList());
+        return allTags.values().stream().distinct().sorted().collect(Collectors.toList());
     }
 
     public @Nullable SummonerProfile getProfileFor(Creature summoner) {
@@ -310,12 +314,12 @@ public class BeastSummonerDatabase extends Database {
             } else {
                 options = allTagOptions.computeIfAbsent(tag, k -> new ArrayList<>());
                 execute(db -> {
-                    PreparedStatement ps = db.prepareStatement("UPDATE tag_options SET template=?, cap=?, price=?, types=? WHERE tag=?;");
-                    ps.setInt(1, template.getTemplateId());
-                    ps.setInt(2, cap);
-                    ps.setInt(3, price);
-                    ps.setString(4, typesString(allowedTypes));
-                    ps.setString(5, tag);
+                    PreparedStatement ps = db.prepareStatement("UPDATE tag_options SET cap=?, price=?, types=? WHERE tag=? AND template=?;");
+                    ps.setInt(1, cap);
+                    ps.setInt(2, price);
+                    ps.setString(3, typesString(allowedTypes));
+                    ps.setString(4, tag);
+                    ps.setInt(5, template.getTemplateId());
                     ps.execute();
                 });
             }
@@ -325,12 +329,12 @@ public class BeastSummonerDatabase extends Database {
             } else {
                 options = allOptions.computeIfAbsent(summoner, k -> new ArrayList<>());
                 execute(db -> {
-                    PreparedStatement ps = db.prepareStatement("UPDATE options SET template=?, cap=?, price=?, types=? WHERE id=?;");
-                    ps.setInt(1, template.getTemplateId());
-                    ps.setInt(2, cap);
-                    ps.setInt(3, price);
-                    ps.setString(4, typesString(allowedTypes));
-                    ps.setLong(5, summoner.getWurmId());
+                    PreparedStatement ps = db.prepareStatement("UPDATE options SET cap=?, price=?, types=? WHERE id=? AND template=?;");
+                    ps.setInt(1, cap);
+                    ps.setInt(2, price);
+                    ps.setString(3, typesString(allowedTypes));
+                    ps.setLong(4, summoner.getWurmId());
+                    ps.setInt(5, template.getTemplateId());
                     ps.execute();
                 });
             }
@@ -348,10 +352,10 @@ public class BeastSummonerDatabase extends Database {
     }
 
     public String getTagFor(Creature summoner) {
-        return allTags.get(summoner);
+        return allTags.getOrDefault(summoner, "");
     }
 
-    public void updateTag(Creature summoner, String tag) throws FailedToUpdateTagException {
+    public void updateTagFor(Creature summoner, String tag) throws FailedToUpdateTagException {
         try {
             execute(db -> {
                 PreparedStatement ps = db.prepareStatement("UPDATE summoner SET tag=? WHERE id=?;");
@@ -359,6 +363,12 @@ public class BeastSummonerDatabase extends Database {
                 ps.setLong(2, summoner.getWurmId());
                 ps.execute();
             });
+
+            if (tag.isEmpty()) {
+                allTags.remove(summoner);
+            } else {
+                allTags.put(summoner, tag);
+            }
         } catch (SQLException e) {
             throw new FailedToUpdateTagException();
         }
@@ -392,6 +402,11 @@ public class BeastSummonerDatabase extends Database {
     }
 
     public void setCurrencyFor(Creature summoner, int currency) throws SQLException, NoSuchTemplateException {
+        ItemTemplate currencyTemplate = null;
+        if (currency != -1) {
+            currencyTemplate = ItemTemplateFactory.getInstance().getTemplate(currency);
+        }
+
         execute(db -> {
             PreparedStatement ps = db.prepareStatement("UPDATE summoner SET currency=? WHERE id=?;");
             ps.setInt(1, currency);
@@ -400,8 +415,13 @@ public class BeastSummonerDatabase extends Database {
         });
 
         SummonerProfile oldProfile = allProfiles.get(summoner);
-        ItemTemplate currencyTemplate = ItemTemplateFactory.getInstance().getTemplate(currency);
-        allProfiles.put(summoner, new SummonerProfile(oldProfile.spawnPointCentre, oldProfile.floorLevel, oldProfile.range, currencyTemplate));
+        SummonerProfile newProfile;
+        if (currency == -1) {
+            newProfile = new SummonerProfile(oldProfile.spawnPointCentre, oldProfile.floorLevel, oldProfile.range);
+        } else {
+            newProfile = new SummonerProfile(oldProfile.spawnPointCentre, oldProfile.floorLevel, oldProfile.range, currencyTemplate);
+        }
+        allProfiles.put(summoner, newProfile);
     }
 
     public void deleteSummoner(Creature summoner) throws SQLException {

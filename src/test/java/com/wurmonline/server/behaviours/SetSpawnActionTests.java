@@ -6,7 +6,7 @@ import com.wurmonline.server.players.Player;
 import com.wurmonline.server.questions.SetSpawnQuestion;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.server.zones.Zones;
-import mod.wurmunlimited.npcs.BeastSummonerTest;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

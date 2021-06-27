@@ -4,7 +4,7 @@ import com.wurmonline.server.items.Item;
 import com.wurmonline.server.items.ItemList;
 import com.wurmonline.server.structures.BridgePart;
 import com.wurmonline.server.structures.Floor;
-import mod.wurmunlimited.npcs.BeastSummonerTest;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

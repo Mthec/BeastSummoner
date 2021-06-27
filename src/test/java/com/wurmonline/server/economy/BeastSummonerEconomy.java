@@ -2,7 +2,7 @@ package com.wurmonline.server.economy;
 
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.creatures.NoSuchCreatureException;
-import mod.wurmunlimited.npcs.BeastSummonerObjectsFactory;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerObjectsFactory;
 
 public class BeastSummonerEconomy {
     public static void createShop(long wurmId) {

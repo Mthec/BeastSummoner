@@ -214,7 +214,7 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
                 sb.append("'s tag was set to '").append(tag).append("'.");
 
             try {
-                BeastSummonerMod.mod.db.updateTag(summoner, tag);
+                BeastSummonerMod.mod.db.updateTagFor(summoner, tag);
             } catch (BeastSummonerDatabase.FailedToUpdateTagException e) {
                 sb = new StringBuilder(summoner.getName()).append(" looks at the ground and does nothing.");
             }

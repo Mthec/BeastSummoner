@@ -4,8 +4,8 @@ import com.wurmonline.server.items.BeastSummonerTrade;
 import com.wurmonline.server.items.ItemList;
 import com.wurmonline.server.items.NoSuchTemplateException;
 import com.wurmonline.server.items.Trade;
-import mod.wurmunlimited.npcs.BeastSummonerTest;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTest;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;

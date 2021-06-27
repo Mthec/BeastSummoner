@@ -6,7 +6,6 @@ import com.wurmonline.server.items.ItemList;
 import com.wurmonline.server.players.Player;
 import com.wurmonline.server.questions.CreatureCreationQuestion;
 import com.wurmonline.server.questions.Question;
-import mod.wurmunlimited.npcs.BeastSummonerTest;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modloader.interfaces.MessagePolicy;
 import org.junit.jupiter.api.Test;

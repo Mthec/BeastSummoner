@@ -5,7 +5,7 @@ import com.wurmonline.server.NoSuchItemException;
 import com.wurmonline.server.creatures.BeastSummonerTradeHandler;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.economy.Shop;
-import mod.wurmunlimited.npcs.BeastSummonerTest;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTest;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

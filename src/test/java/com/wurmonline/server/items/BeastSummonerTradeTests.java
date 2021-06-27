@@ -3,7 +3,7 @@ package com.wurmonline.server.items;
 import com.wurmonline.server.creatures.BeastSummonerTradeHandlerCoins;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.questions.SummonRequest;
-import mod.wurmunlimited.npcs.BeastSummonerTest;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTest;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package mod.wurmunlimited.npcs;
+package mod.wurmunlimited.npcs.beastsummoner;
 
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.ItemTemplate;
@@ -7,8 +7,6 @@ import com.wurmonline.server.kingdom.Kingdom;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.server.zones.Zones;
 import mod.wurmunlimited.WurmObjectsFactory;
-import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
-import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTemplate;
 
 public class BeastSummonerObjectsFactory extends WurmObjectsFactory {
     public BeastSummonerObjectsFactory() throws Exception {

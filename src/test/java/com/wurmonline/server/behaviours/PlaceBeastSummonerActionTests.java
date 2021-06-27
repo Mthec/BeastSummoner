@@ -7,7 +7,7 @@ import com.wurmonline.server.players.Player;
 import com.wurmonline.server.questions.PlaceBeastSummonerQuestion;
 import com.wurmonline.server.zones.Zones;
 import mod.wurmunlimited.Assert;
-import mod.wurmunlimited.npcs.BeastSummonerTest;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTest;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

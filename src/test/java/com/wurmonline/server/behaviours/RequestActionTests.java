@@ -2,7 +2,7 @@ package com.wurmonline.server.behaviours;
 
 import com.wurmonline.server.players.Player;
 import com.wurmonline.server.questions.BeastSummonerRequestQuestion;
-import mod.wurmunlimited.npcs.BeastSummonerTest;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -9,6 +9,7 @@ import com.wurmonline.server.questions.ExampleSummonerRequest;
 import com.wurmonline.server.questions.SummonRequest;
 import mod.wurmunlimited.npcs.FaceSetter;
 import mod.wurmunlimited.npcs.ModelSetter;
+import mod.wurmunlimited.npcs.beastsummoner.db.BeastSummonerDatabase;
 import mod.wurmunlimited.npcs.db.Database;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.junit.jupiter.api.AfterEach;
@@ -24,6 +25,7 @@ import java.util.List;
 public abstract class BeastSummonerTest {
     private static boolean init = false;
     protected BeastSummonerObjectsFactory factory;
+    protected BeastSummonerDatabase db;
     protected Player gm;
     protected Player player;
     protected Creature summoner;
@@ -44,7 +46,7 @@ public abstract class BeastSummonerTest {
         ReflectionUtil.<List<ModelSetter>>getPrivateField(null, ModelSetter.class.getDeclaredField("modelSetters")).clear();
 
         BeastSummonerMod mod = new BeastSummonerMod();
-
+        db = BeastSummonerMod.mod.db;
         mod.faceSetter = new FaceSetter(BeastSummonerTemplate::is, "beast_summoner.db");
         mod.modelSetter = new ModelSetter(BeastSummonerTemplate::is, "beast_summoner.db");
 
@@ -52,7 +54,7 @@ public abstract class BeastSummonerTest {
         gm.setPower((byte)2);
         player = factory.createNewPlayer();
         summoner = factory.createNewBeastSummoner();
-        profile = BeastSummonerMod.mod.db.getProfileFor(summoner);
+        profile = db.getProfileFor(summoner);
     }
 
     private static void cleanUp() {

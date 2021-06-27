@@ -20,7 +20,9 @@ import java.util.stream.Collectors;
 
 public class BeastSummonerDatabase extends Database {
     public static class FailedToUpdateTagException extends Exception {
-        FailedToUpdateTagException() {}
+        FailedToUpdateTagException(SQLException e) {
+            super(e);
+        }
     }
 
     private static final Logger logger = Logger.getLogger(BeastSummonerDatabase.class.getName());
@@ -370,7 +372,48 @@ public class BeastSummonerDatabase extends Database {
                 allTags.put(summoner, tag);
             }
         } catch (SQLException e) {
-            throw new FailedToUpdateTagException();
+            throw new FailedToUpdateTagException(e);
+        }
+    }
+
+    public void renameTag(String oldTag, String newTag) throws FailedToUpdateTagException {
+        try {
+            execute(db -> {
+                PreparedStatement ps = db.prepareStatement("UPDATE summoner SET tag=? WHERE tag=?;");
+                ps.setString(1, newTag);
+                ps.setString(2, oldTag);
+                ps.execute();
+            });
+
+            allTags.replaceAll((creature, s) -> s.equals(oldTag) ? newTag : s);
+            List<SummonOption> options = allTagOptions.remove(oldTag);
+            if (options != null) {
+                allTagOptions.put(newTag, options);
+            }
+        } catch (SQLException e) {
+            throw new FailedToUpdateTagException(e);
+        }
+    }
+
+    public void deleteTag(String tag) throws FailedToUpdateTagException {
+        try {
+            execute(db -> {
+                PreparedStatement ps = db.prepareStatement("UPDATE summoner SET tag=? WHERE tag=?;");
+                ps.setString(1, "");
+                ps.setString(2, tag);
+                ps.execute();
+            });
+
+            execute(db -> {
+                PreparedStatement ps = db.prepareStatement("DELETE FROM tag_options WHERE tag=?;");
+                ps.setString(1, tag);
+                ps.execute();
+            });
+
+            allTags.values().removeIf(tag::equals);
+            allTagOptions.remove(tag);
+        } catch (SQLException e) {
+            throw new FailedToUpdateTagException(e);
         }
     }
 

@@ -8,6 +8,7 @@ import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.ItemTemplate;
 import com.wurmonline.server.items.NoSuchTemplateException;
 import com.wurmonline.server.players.Player;
+import com.wurmonline.server.questions.ModelSetterQuestionHelper.ModelOption;
 import com.wurmonline.server.structures.Structure;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.shared.util.StringUtilities;
@@ -45,7 +46,14 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
         allTags = BeastSummonerMod.mod.db.getAllTags();
         allTags.add(0, NO_TAG);
         face = new FaceSetterQuestionHelper(BeastSummonerMod.mod.faceSetter, summoner);
-        model = new ModelSetterQuestionHelper(BeastSummonerMod.mod.modelSetter, summoner, "Trader");
+        ModelSetterQuestionHelper model = null;
+        try {
+            model = new ModelSetterQuestionHelper(BeastSummonerMod.mod.modelSetter, summoner, ModelOption.HUMAN, ModelOption.TRADER, ModelOption.CUSTOM);
+        } catch (ModelSetterQuestionHelper.NoValidModelException e) {
+            logger.warning("No valid model found, this should never happen.");
+            e.printStackTrace();
+        }
+        this.model = model;
         isNew = summoner == null;
     }
 
@@ -167,7 +175,7 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
 
     protected void checkSaveModel(Creature summoner) {
         String currentModel = BeastSummonerMod.mod.modelSetter.getModelFor(summoner);
-        String modelName = model.getModelName(getAnswer(), TRADER_MODEL_NAME);
+        String modelName = model.getModelName(getAnswer(), HUMAN_MODEL_NAME);
         if (!modelName.equals(currentModel)) {
             try {
                 BeastSummonerMod.mod.modelSetter.setModelFor(summoner, modelName);
@@ -322,19 +330,19 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
     protected BML middleBML(BML bml, String namePlaceholder) {
         return model.addQuestion(
                 face.addQuestion(bml
-                                         .text("Use a 'tag' to use the same summoning options for multiple summoners.")
-                                         .text("Leave blank to keep the summoning options unique to this summoner.")
-                                         .newLine()
-                                         .harray(b -> b.label("Name: " + getPrefix()).entry("name", namePlaceholder, BeastSummonerMod.maxNameLength))
-                                         .text("Leave blank for a random name.").italic()
-                                         .newLine()));
+                       .text("Use a 'tag' to use the same summoning options for multiple summoners.")
+                       .text("Leave blank to keep the summoning options unique to this summoner.")
+                       .newLine()
+                       .harray(b -> b.label("Name: " + getPrefix()).entry("name", namePlaceholder, BeastSummonerMod.maxNameLength))
+                       .text("Leave blank for a random name.").italic()
+                       .newLine()));
     }
 
     private BML addTagSelector(BML bml, String currentTag) {
         return bml
                        .harray(b -> b.label("Tag:").entry("tag", currentTag, BeastSummonerMod.maxTagLength))
                        .text(" - or - ")
-                       .harray(b -> b.dropdown("tags", Joiner.on(",").join(allTags)).spacer().button("edit", "Edit Tags"))
+                       .harray(b -> b.dropdown("tags", Joiner.on(",").join(allTags)).If(!isNew, b2 -> b2.spacer().button("edit", "Edit Tags")))
                        .newLine()
                        .text("Currency:")
                        .text("Filter available templates:")

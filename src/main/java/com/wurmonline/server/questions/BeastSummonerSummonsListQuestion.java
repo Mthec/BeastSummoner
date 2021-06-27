@@ -193,6 +193,8 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                              .newLine()
                              .harray(b -> b.button("submit", "Send"))
                              .build();
+
+        getResponder().getCommunicator().sendBml(350, 400, true, true, bml, 200, 200, 200, title);
     }
 
     private void sendOptionQuestion(int templateIndex, int price, int cap, Set<Byte> allowedTypes) {

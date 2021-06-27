@@ -8,7 +8,10 @@ import com.wurmonline.server.items.NoSuchTemplateException;
 import com.wurmonline.server.questions.CreatureTypeList;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.server.zones.Zones;
-import mod.wurmunlimited.npcs.beastsummoner.*;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTemplate;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTest;
+import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
+import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +23,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class BeastSummonerDatabaseTests extends BeastSummonerTest {
     private final String dbName = "sqlite/beast_summoner.db";
-    private BeastSummonerDatabase db;
 
     @BeforeEach
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        db = BeastSummonerMod.mod.db;
         db.tagDumpDbString = "sqlite/tags.db";
     }
 

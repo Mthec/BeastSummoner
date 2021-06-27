@@ -31,8 +31,12 @@ public class BeastSummonerManagementQuestion extends BeastSummonerPlaceOrManageQ
             checkSaveModel(summoner);
             checkSaveCurrency(summoner);
             checkSaveTag(summoner, currentTag);
+        } else if (wasSelected("edit")) {
+            new BeastSummonerEditTagsQuestion(getResponder()).sendQuestion();
         } else if (wasSelected("list")) {
             new BeastSummonerSummonsListQuestion(getResponder(), summoner).sendQuestion();
+        } else if (wasSelected("dismiss")) {
+            tryDismiss(summoner);
         }
     }
 

@@ -10,6 +10,7 @@ import com.wurmonline.server.zones.Zone;
 import com.wurmonline.server.zones.Zones;
 import mod.wurmunlimited.bml.BMLBuilder;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
+import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -20,13 +21,19 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
     private final Creature settingFor;
     private final VolaTile tile;
     private final int floorLevel;
-    private int range = 0;
+    private int range;
 
     public SetSpawnQuestion(Creature performer, Creature settingFor, VolaTile tile, int floorLevel) {
         super(performer, "Set Spawn", "", MANAGETRADER, settingFor.getWurmId());
         this.settingFor = settingFor;
         this.tile = tile;
         this.floorLevel = floorLevel;
+        SummonerProfile profile = BeastSummonerMod.mod.db.getProfileFor(settingFor);
+        if (profile != null) {
+            this.range = profile.range;
+        } else {
+            this.range = 0;
+        }
     }
 
     @Override
@@ -40,13 +47,18 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
         }
 
         try {
-            range = getIntegerOrDefault("range", 1);
-            if (range < 0) {
-                throw new NumberFormatException("Range must be 0 or greater, setting 0.");
+            String val = answers.getProperty("range");
+            int newRange = range;
+            if (val != null && !val.isEmpty()) {
+                newRange = Integer.parseInt(val);
+            }
+            if (newRange < 0) {
+                responder.getCommunicator().sendNormalServerMessage("Range must be 0 or greater, setting " + range + ".");
+            } else {
+                range = newRange;
             }
         } catch (NumberFormatException e) {
-            range = 0;
-            responder.getCommunicator().sendNormalServerMessage(e.getMessage());
+            responder.getCommunicator().sendNormalServerMessage("Invalid range supplied, setting " + range + ".");
         }
 
         if (wasSelected("survey")) {
@@ -55,9 +67,10 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
                 int y = xY[1];
 
                 try {
-                    final Item i = ItemFactory.createItem(ItemList.buildMarker, 80.0f, this.getResponder().getName());
-                    i.setPosXYZ((float)((x << 2) + 2), (float)((y << 2) + 2), Zones.calculateHeight((float)((x << 2) + 2), (float)((y << 2) + 2), true) + 5.0f);
-                    Zones.getZone(x, y, true).addItem(i);
+                    final Item item = ItemFactory.createItem(ItemList.buildMarker, 80.0f, this.getResponder().getName());
+                    item.setPosXYZ((float)((x << 2) + 2), (float)((y << 2) + 2), Zones.calculateHeight((float)((x << 2) + 2), (float)((y << 2) + 2), tile.isOnSurface()) + 5.0f);
+                    // TODO - What about floor?
+                    Zones.getZone(x, y, tile.isOnSurface()).addItem(item);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -66,7 +79,7 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
             sendQuestion();
         } else if (wasSelected("submit")) {
             try {
-                BeastSummonerMod.mod.db.setSpawnFor(settingFor, tile, floorLevel, range);
+                BeastSummonerMod.mod.db.setSpawnFor(settingFor, tile, range, floorLevel);
             } catch (SQLException e) {
                 responder.getCommunicator().sendAlertServerMessage("Something went wrong and the spawn was not set.");
                 e.printStackTrace();

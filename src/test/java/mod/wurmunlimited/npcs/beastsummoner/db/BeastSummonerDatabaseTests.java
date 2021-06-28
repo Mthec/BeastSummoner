@@ -473,6 +473,30 @@ public class BeastSummonerDatabaseTests extends BeastSummonerTest {
     }
 
     @Test
+    void testUpdateOptionUniqueOrdering() throws NoSuchCreatureTemplateException, SQLException {
+        int n = 36;
+        CreatureTemplate template1 = CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.ANACONDA_CID);
+        CreatureTemplate template2 = CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.COW_BROWN_CID);
+        db.addOption(summoner, template1, n, n + 1, Collections.emptySet());
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.RIFT_JACKAL_CASTER_CID), n + 5, n + 6, Collections.emptySet());
+        List<SummonOption> oldOptions = new ArrayList<>(Objects.requireNonNull(db.getOptionsFor(summoner)));
+        SummonOption oldOption = oldOptions.get(0);
+        SummonOption oldOption2 = oldOptions.get(1);
+        db.updateOption(summoner, oldOption, template2, n + 2, n + 3, new HashSet<>(CreatureTypeList.all));
+        List<SummonOption> options = db.getOptionsFor(summoner);
+
+        assertNotNull(options);
+        assertEquals(2, options.size());
+        assertEquals(oldOption2, options.get(1));
+        SummonOption option = options.get(0);
+        assertNotEquals(oldOption, option);
+        assertEquals(template2, option.template);
+        assertEquals(n + 3, option.cap);
+        assertEquals(n + 2, option.price);
+        assertEquals(CreatureTypeList.all.size(), option.allowedTypes.size());
+    }
+
+    @Test
     void testUpdateOptionTag() throws NoSuchCreatureTemplateException, SQLException, BeastSummonerDatabase.FailedToUpdateTagException {
         int n = 37;
         CreatureTemplate template1 = CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.BISON_CID);

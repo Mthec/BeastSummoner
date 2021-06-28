@@ -20,6 +20,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
 
     private final Creature summoner;
     private final SummonerProfile profile;
+    private final String tag;
     private final List<SummonOption> summons;
     private final String priceSuffix;
     private CreatureTemplatesDropdown dropdown = null;
@@ -30,6 +31,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
         super(responder, "Summon List", "", MANAGETRADER, summoner.getWurmId());
         this.summoner = summoner;
         profile = BeastSummonerMod.mod.db.getProfileFor(summoner);
+        tag = BeastSummonerMod.mod.db.getTagFor(summoner);
         priceSuffix = profile == null ? "???" : profile.acceptsCoin ? "irons" : profile.currency.getName();
         List<SummonOption> options = BeastSummonerMod.mod.db.getOptionsFor(summoner);
         if (options == null) {
@@ -60,16 +62,33 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                 for (int i = 0; i < summons.size(); i++) {
                     String property = answers.getProperty("r" + i);
                     if (property != null && property.equals("true")) {
-                        summons.remove(i);
+                        try {
+                            SummonOption option = summons.get(i);
+                            if (option != null) {
+                                if (tag.isEmpty()) {
+                                    BeastSummonerMod.mod.db.deleteOption(summoner, option);
+                                } else {
+                                    BeastSummonerMod.mod.db.deleteOption(tag, option);
+                                }
+                            }
+                        } catch (IndexOutOfBoundsException e) {
+                            logger.warning("Attempted to remove summon option outside of range " + i + " - " + summons.size());
+                            getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not removed.");
+                        }
                         break;
                     }
 
                     property = answers.getProperty("e" + i);
                     if (property != null && property.equals("true")) {
                         state = State.EDIT;
-                        dropdown = new CreatureTemplatesDropdown(summons.stream().map(it -> it.template).collect(Collectors.toList()));
-                        editOption = summons.get(i);
-                        sendOptionQuestion(dropdown.getIndexOf(editOption.template), editOption.price, editOption.cap, editOption.allowedTypes);
+                        try {
+                            editOption = summons.get(i);
+                            dropdown = new CreatureTemplatesDropdown(summons.stream().filter(it -> it.template != editOption.template).map(it -> it.template).collect(Collectors.toList()));
+                            sendOptionQuestion(dropdown.getIndexOf(editOption.template), editOption.price, editOption.cap, editOption.allowedTypes);
+                        } catch (IndexOutOfBoundsException e) {
+                            logger.warning("Attempted to edit summon option outside of range " + i + " - " + summons.size());
+                            getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not found.");
+                        }
                         return;
                     }
                 }
@@ -126,20 +145,20 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                 int index = Integer.parseInt(indexString);
                 CreatureTemplate template = dropdown.getTemplateOrNull(index);
                 if (template != null) {
-                    int price = getPositiveIntegerOrDefault("price", 1);
-                    int cap = getPositiveIntegerOrDefault("cap", 1);
+                    int price = getPositiveIntegerOrDefault("price", -1);
+                    if (price == -1) {
+                        getResponder().getCommunicator().sendNormalServerMessage("Price must be 1 or greater, setting 1.");
+                        price = 1;
+                    }
+
+                    int cap = getPositiveIntegerOrDefault("cap", -1);
+                    if (cap == -1) {
+                        getResponder().getCommunicator().sendNormalServerMessage("Cap must be 1 or greater, setting 1.");
+                        cap = 1;
+                    }
 
                     try {
                         SummonOption option = BeastSummonerMod.mod.db.updateOption(summoner, editOption, template, price, cap, getAllowedTypes());
-                        if (option != null) {
-                            int indexOfOldOption = summons.indexOf(editOption);
-
-                            if (indexOfOldOption >= 0) {
-                                summons.set(indexOfOldOption, option);
-                            } else {
-                                summons.add(option);
-                            }
-                        }
                     } catch (SQLException e) {
                         getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not saved.");
                         logger.warning("Error saving summon option with (" + price + ", " + cap + ").");
@@ -183,6 +202,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
 
         AtomicInteger i = new AtomicInteger(0);
         String bml = new BMLBuilder(id)
+                             .If(!tag.isEmpty(), b -> b.text("This summoner is using a tag and so any changes will affect all summoners using this tag."))
                              .table(new String[] { "Summon", "Price", "Cap", "Edit", "Remove?" }, summons, (option, b) -> b
                                                           .label(option.template.getName())
                                                           .label(getPriceString(profile, option.price))
@@ -205,7 +225,11 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
         final Set<Byte> finalAllowedTypes = allowedTypes;
 
         String bml = new BMLBuilder(id)
+                             .If(!tag.isEmpty(), b -> b.text("This summoner is using a tag and so any changes will affect all summoners using this tag."))
                              .dropdown("template", dropdown.getTemplatesString(), templateIndex)
+                             .newLine()
+                             .text("Filter available templates:")
+                             .text("* is a wildcard that stands in for one or more characters.\ne.g. *dragon* to find all dragons and hatchlings or Rift* to find all rift creatures.")
                              .newLine()
                              .harray(b -> b.label("Price").spacer()
                                            .entry("price", Integer.toString(price), 10).spacer()

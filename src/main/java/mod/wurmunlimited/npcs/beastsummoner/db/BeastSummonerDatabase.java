@@ -273,7 +273,7 @@ public class BeastSummonerDatabase extends Database {
 
     public SummonOption addOption(Creature summoner, CreatureTemplate template, int price, int cap, Set<Byte> allowedTypes) throws SQLException {
         execute(db -> {
-            PreparedStatement ps = db.prepareStatement("INSERT OR IGNORE INTO options (id, template, cap, price, types) VALUES(?, ?, ?, ?, ?);");
+            PreparedStatement ps = db.prepareStatement("INSERT INTO options (id, template, cap, price, types) VALUES(?, ?, ?, ?, ?);");
             ps.setLong(1, summoner.getWurmId());
             ps.setInt(2, template.getTemplateId());
             ps.setInt(3, cap);
@@ -290,7 +290,7 @@ public class BeastSummonerDatabase extends Database {
 
     public SummonOption addOption(String tag, CreatureTemplate template, int price, int cap, Set<Byte> allowedTypes) throws SQLException {
         execute(db -> {
-            PreparedStatement ps = db.prepareStatement("INSERT OR IGNORE INTO tag_options (tag, template, cap, price, types) VALUES(?, ?, ?, ?, ?);");
+            PreparedStatement ps = db.prepareStatement("INSERT INTO tag_options (tag, template, cap, price, types) VALUES(?, ?, ?, ?, ?);");
             ps.setString(1, tag);
             ps.setInt(2, template.getTemplateId());
             ps.setInt(3, cap);
@@ -479,6 +479,40 @@ public class BeastSummonerDatabase extends Database {
         }
 
         deleteAllOptionsFor(summoner);
+    }
+
+    public void deleteOption(String tag, SummonOption option) {
+        List<SummonOption> options = allTagOptions.get(tag);
+        if (options != null && options.remove(option)) {
+            try {
+                execute(db -> {
+                    PreparedStatement ps = db.prepareStatement("DELETE FROM tag_options WHERE tag=? AND template=?;");
+                    ps.setString(1, tag);
+                    ps.setInt(2, option.template.getTemplateId());
+                    ps.execute();
+                });
+            } catch (SQLException e) {
+                logger.warning("Error when deleting tag option for \"" + tag + "\".");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void deleteOption(Creature summoner, SummonOption option) {
+        List<SummonOption> options = allOptions.get(summoner);
+        if (options != null && options.remove(option)) {
+            try {
+                execute(db -> {
+                    PreparedStatement ps = db.prepareStatement("DELETE FROM options WHERE id=? AND template=?;");
+                    ps.setLong(1, summoner.getWurmId());
+                    ps.setInt(2, option.template.getTemplateId());
+                    ps.execute();
+                });
+            } catch (SQLException e) {
+                logger.warning("Error when deleting option for " + summoner.getName() + " (" + summoner.getWurmId() + ").");
+                e.printStackTrace();
+            }
+        }
     }
 
     public void deleteAllOptionsFor(Creature summoner) throws SQLException {

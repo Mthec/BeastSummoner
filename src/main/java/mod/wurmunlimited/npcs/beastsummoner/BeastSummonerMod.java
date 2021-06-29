@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-public class BeastSummonerMod implements WurmServerMod, Configurable, PlayerMessageListener, PreInitable, ServerStartedListener {
+public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, PlayerMessageListener, PreInitable, ServerStartedListener {
     private static final Logger logger = Logger.getLogger(BeastSummonerMod.class.getName());
     public static final int maxTagLength = 25;
     public static final int maxNameLength = 20;
@@ -83,6 +83,7 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, PlayerMess
 
     @Override
     public void onServerStarted() {
+        db.loadData();
         TradeSetup.addTrader(BeastSummonerTemplate::is, BeastSummonerTradeHandler::create);
         faceSetter = new FaceSetter(BeastSummonerTemplate::is, dbName);
         modelSetter = new ModelSetter(BeastSummonerTemplate::is, dbName);

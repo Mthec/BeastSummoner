@@ -5,11 +5,11 @@ import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 
 @SuppressWarnings("SameParameterValue")
 public abstract class BeastSummonerQuestionExtension extends QuestionExtension {
-    BeastSummonerQuestionExtension(Creature responder, String title, String question, int type, long target) {
+    protected BeastSummonerQuestionExtension(Creature responder, String title, String question, int type, long target) {
         super(responder, title, question, type, target);
     }
 
-    String getPrefix() {
+    protected String getPrefix() {
         if (BeastSummonerMod.namePrefix.isEmpty()) {
             return "";
         } else {
@@ -17,7 +17,7 @@ public abstract class BeastSummonerQuestionExtension extends QuestionExtension {
         }
     }
 
-    String getNameWithoutPrefix(String name) {
+    protected String getNameWithoutPrefix(String name) {
         if (BeastSummonerMod.namePrefix.isEmpty() || name.length() < BeastSummonerMod.namePrefix.length() + 1) {
             return name;
         } else {

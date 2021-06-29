@@ -339,10 +339,12 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
     }
 
     private BML addTagSelector(BML bml, String currentTag) {
+        String tagsString = Joiner.on(",").join(allTags);
         return bml
                        .harray(b -> b.label("Tag:").entry("tag", currentTag, BeastSummonerMod.maxTagLength))
-                       .text(" - or - ")
-                       .harray(b -> b.dropdown("tags", Joiner.on(",").join(allTags)).If(!isNew, b2 -> b2.spacer().button("edit", "Edit Tags")))
+                       .If(!tagsString.isEmpty(), b -> b
+                           .text(" - or - ")
+                           .harray(b2 -> b2.dropdown("tags", tagsString).If(!isNew, b3 -> b3.spacer().button("edit", "Edit Tags"))))
                        .newLine()
                        .text("Currency:")
                        .text("Filter available templates:")

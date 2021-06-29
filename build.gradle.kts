@@ -42,12 +42,14 @@ tasks {
         }
 
         from(configurations.runtimeClasspath.get().filter { it.name.startsWith("BMLBuilder") && it.name.endsWith("jar") }.map { zipTree(it) })
-        from(configurations.runtimeClasspath.get().filter { it.name.startsWith("PlaceNpc") && it.name.endsWith("jar") }.map { zipTree(it) })
         from(configurations.runtimeClasspath.get().filter { it.name.startsWith("CreatureCustomiser") && it.name.endsWith("jar") }.map { zipTree(it) })
+        from(configurations.runtimeClasspath.get().filter { it.name.startsWith("PlaceNpc") && it.name.endsWith("jar") }.map { zipTree(it) })
+        from(configurations.runtimeClasspath.get().filter { it.name.startsWith("QuestionLibrary") && it.name.endsWith("jar") }.map { zipTree(it) })
+        from(configurations.runtimeClasspath.get().filter { it.name.startsWith("TradeLibrary") && it.name.endsWith("jar") }.map { zipTree(it) })
 
         includeEmptyDirs = false
         archiveFileName.set("$shortName.jar")
-        exclude("**/TradeHandler.class", "**/Trade.class", "**/TradingWindow.class", "**/CustomTraderTradeAction.class")
+        exclude("**/TradeHandler.class", "**/Trade.class", "**/TradingWindow.class")
 
         manifest {
             attributes["Implementation-Version"] = archiveVersion

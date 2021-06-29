@@ -251,7 +251,7 @@ public class BeastSummonerManagementQuestionTests extends BeastSummonerTest {
         String oldModel = "old.model";
         BeastSummonerMod.mod.modelSetter.setModelFor(summoner, oldModel);
         Properties properties = new Properties();
-        properties.setProperty("model", "default");
+        properties.setProperty("model", "trader");
         properties.setProperty("custom_model", "blah");
         properties.setProperty("confirm", "true");
         new BeastSummonerManagementQuestion(gm, summoner).answer(properties);

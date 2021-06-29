@@ -21,11 +21,11 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
 
     private final Player player;
     private final Creature summoner;
-    private final List<SummonRequest.SummonRequestDetails> summons = new ArrayList<>();
+    private final List<SummonRequest.SummonRequestDetails> summons;
     private final List<SummonOption> unusedOptions;
     private final SummonerProfile profile;
     private SummonOption waitingForDetails = null;
-    private State state = State.LIST;
+    private final State state;
 
     public BeastSummonerRequestQuestion(Player responder, Creature summoner) {
         super(responder, "Beast Summoner", "", CREATURECREATION, summoner.getWurmId());
@@ -40,6 +40,31 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
             unusedOptions.sort(Comparator.comparing(it -> it.template.getName()));
         }
         profile = BeastSummonerMod.mod.db.getProfileFor(summoner);
+        summons = new ArrayList<>();
+        state = State.LIST;
+    }
+
+    private BeastSummonerRequestQuestion(BeastSummonerRequestQuestion oldQuestion, State newState) {
+        super(oldQuestion.getResponder(), "Beast Summoner", "", CREATURECREATION, oldQuestion.summoner.getWurmId());
+        player = oldQuestion.player;
+        summoner = oldQuestion.summoner;
+        summons = oldQuestion.summons;
+        unusedOptions = oldQuestion.unusedOptions;
+        profile = oldQuestion.profile;
+        state = newState;
+
+        switch (state) {
+            case LIST:
+                sendQuestion();
+                break;
+            case ADD:
+                sendAddQuestion();
+                break;
+            case DETAILS:
+                waitingForDetails = oldQuestion.waitingForDetails;
+                sendOptionQuestion(waitingForDetails);
+                break;
+        }
     }
 
     @Override
@@ -53,8 +78,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
         switch (state) {
             case LIST:
                 if (wasSelected("add")) {
-                    state = State.ADD;
-                    sendAddQuestion();
+                    new BeastSummonerRequestQuestion(this, State.ADD);
                 } else if (wasSelected("submit")) {
                     if (summons.size() == 0) {
                         responder.getCommunicator().sendNormalServerMessage("You decide not to summon anything at this time.");
@@ -83,7 +107,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                             break;
                         }
                     }
-                    sendQuestion();
+                    new BeastSummonerRequestQuestion(this, State.LIST);
                 }
                 break;
             case ADD:
@@ -94,9 +118,8 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                             try {
                                 int option = Integer.parseInt(val.substring(1));
                                 if (option >= 0 && option < unusedOptions.size()) {
-                                    state = State.DETAILS;
                                     waitingForDetails = unusedOptions.get(option);
-                                    sendOptionQuestion(waitingForDetails);
+                                    new BeastSummonerRequestQuestion(this, State.DETAILS);
                                     return;
                                 }
                                 throw new NumberFormatException();
@@ -107,8 +130,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                     }
                 }
 
-                state = State.LIST;
-                sendQuestion();
+                new BeastSummonerRequestQuestion(this, State.LIST);
                 break;
             case DETAILS:
                 if (!wasSelected("cancel")) {
@@ -157,8 +179,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                     summons.add(new SummonRequest.SummonRequestDetails(waitingForDetails, type, age, amount));
                     unusedOptions.remove(waitingForDetails);
                 }
-                state = State.LIST;
-                sendQuestion();
+                new BeastSummonerRequestQuestion(this, State.LIST);
                 break;
         }
     }

@@ -25,7 +25,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
     private final String priceSuffix;
     private CreatureTemplatesDropdown dropdown = null;
     private SummonOption editOption = null;
-    private State state = State.LIST;
+    private final State state;
 
     BeastSummonerSummonsListQuestion(Creature responder, Creature summoner) {
         super(responder, "Summon List", "", MANAGETRADER, summoner.getWurmId());
@@ -38,6 +38,44 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
             summons = new ArrayList<>();
         } else {
             summons = options;
+        }
+        state = State.LIST;
+    }
+
+    private BeastSummonerSummonsListQuestion(BeastSummonerSummonsListQuestion oldQuestion, State newState) {
+        this(oldQuestion, newState, false);
+    }
+
+    private BeastSummonerSummonsListQuestion(BeastSummonerSummonsListQuestion oldQuestion, State newState, boolean filtered) {
+        super(oldQuestion.getResponder(), "Summon List", "", MANAGETRADER, oldQuestion.summoner.getWurmId());
+        summoner = oldQuestion.summoner;
+        profile = oldQuestion.profile;
+        tag = oldQuestion.tag;
+        summons = oldQuestion.summons;
+        priceSuffix = oldQuestion.priceSuffix;
+        state = newState;
+
+        switch (state) {
+            case LIST:
+                sendQuestion();
+                break;
+            case ADD:
+                if (!filtered) {
+                    dropdown = new CreatureTemplatesDropdown(summons.stream().map(it -> it.template).collect(Collectors.toList()));
+                    sendOptionQuestion(0, 1, 1, new HashSet<>(CreatureTypeList.all));
+                } else {
+                    dropdown = oldQuestion.dropdown;
+                }
+                break;
+            case EDIT:
+                editOption = oldQuestion.editOption;
+                if (!filtered) {
+                    dropdown = new CreatureTemplatesDropdown(summons.stream().filter(it -> it.template != editOption.template).map(it -> it.template).collect(Collectors.toList()));
+                    sendOptionQuestion(dropdown.getIndexOf(editOption.template), editOption.price, editOption.cap, editOption.allowedTypes);
+                } else {
+                    dropdown = oldQuestion.dropdown;
+                }
+                break;
         }
     }
 
@@ -53,10 +91,8 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                 }
 
                 if (wasSelected("add")) {
-                    state = State.ADD;
-                    dropdown = new CreatureTemplatesDropdown(summons.stream().map(it -> it.template).collect(Collectors.toList()));
-                    sendOptionQuestion(0, 1, 1, new HashSet<>(CreatureTypeList.all));
-                    break;
+                    new BeastSummonerSummonsListQuestion(this, State.ADD);
+                    return;
                 }
 
                 for (int i = 0; i < summons.size(); i++) {
@@ -80,11 +116,9 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
 
                     property = answers.getProperty("e" + i);
                     if (property != null && property.equals("true")) {
-                        state = State.EDIT;
                         try {
                             editOption = summons.get(i);
-                            dropdown = new CreatureTemplatesDropdown(summons.stream().filter(it -> it.template != editOption.template).map(it -> it.template).collect(Collectors.toList()));
-                            sendOptionQuestion(dropdown.getIndexOf(editOption.template), editOption.price, editOption.cap, editOption.allowedTypes);
+                            new BeastSummonerSummonsListQuestion(this, State.EDIT);
                         } catch (IndexOutOfBoundsException e) {
                             logger.warning("Attempted to edit summon option outside of range " + i + " - " + summons.size());
                             getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not found.");
@@ -93,7 +127,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                     }
                 }
 
-                sendQuestion();
+                new BeastSummonerSummonsListQuestion(this, State.LIST);
                 break;
             case ADD:
                 if (wasSelected("do_filter")) {
@@ -103,8 +137,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                     parseOption(1, 1);
                 }
 
-                state = State.LIST;
-                sendQuestion();
+                new BeastSummonerSummonsListQuestion(this, State.LIST);
                 break;
             case EDIT:
                 if (wasSelected("do_filter")) {
@@ -114,9 +147,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                     parseOption(editOption.price, editOption.cap);
                 }
 
-                editOption = null;
-                state = State.LIST;
-                sendQuestion();
+                new BeastSummonerSummonsListQuestion(this, State.LIST);
                 break;
         }
     }
@@ -189,7 +220,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
         int price = getPositiveIntegerOrDefault("price", defaultPrice);
         int cap = getPositiveIntegerOrDefault("cap", defaultCap);
 
-        sendOptionQuestion(templateIndex, price, cap, getAllowedTypes());
+        new BeastSummonerSummonsListQuestion(this, this.state, true).sendOptionQuestion(templateIndex, price, cap, getAllowedTypes());
     }
 
     @Override

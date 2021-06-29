@@ -9,9 +9,14 @@ import com.wurmonline.server.zones.Zones;
 import mod.wurmunlimited.WurmObjectsFactory;
 
 public class BeastSummonerObjectsFactory extends WurmObjectsFactory {
+    private static boolean createdTemplate = false;
+
     public BeastSummonerObjectsFactory() throws Exception {
         super();
-        new BeastSummonerTemplate().createCreateTemplateBuilder().build();
+        if (!createdTemplate) {
+            new BeastSummonerTemplate().createCreateTemplateBuilder().build();
+            createdTemplate = true;
+        }
         BeastSummonerMod.namePrefix = "Beast_Summoner";
     }
 

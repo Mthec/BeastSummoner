@@ -19,6 +19,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest {
+    private BeastSummonerSummonsListQuestion question;
+
+    private void setNextQuestion() {
+        try {
+            question = (BeastSummonerSummonsListQuestion)Questions.getQuestion(question.id + 1);
+        } catch (NoSuchQuestionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private boolean gmDidNotReceive(String template) {
         String last = factory.getCommunicator(gm).lastBmlContent;
         Pattern pattern = Pattern.compile(getRegex(template));
@@ -74,9 +84,10 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         properties.setProperty("r0", "true");
         properties.setProperty("e0", "true");
         properties.setProperty("add", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.sendQuestion();
         question.answer(properties);
+        setNextQuestion();
 
         assertThat(gm, bmlNotEqual());
         assertThat(gm, receivedBMLContaining("Creature type modifier"));
@@ -113,9 +124,10 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
 
         Properties properties = new Properties();
         properties.setProperty("e0", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.sendQuestion();
         question.answer(properties);
+        setNextQuestion();
 
         assertThat(gm, bmlNotEqual());
         assertThat(gm, receivedBMLContaining("default=\"" + new CreatureTemplatesDropdown(Collections.singletonList(oldOptions.get(1).template)).getIndexOf(oldOptions.get(0).template)));
@@ -135,9 +147,10 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         assert oldOptions.size() == 2;
 
         Properties properties = new Properties();
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.sendQuestion();
         question.answer(properties);
+        setNextQuestion();
 
         assertThat(gm, bmlEqual());
         List<SummonOption> options = db.getOptionsFor(summoner);
@@ -176,12 +189,14 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
 
         Properties properties = new Properties();
         properties.setProperty("add", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
+        setNextQuestion();
         assert gmDidNotReceive(template1.getName());
         properties.setProperty("do_filter", "true");
         properties.setProperty("filter", "Rift*");
         question.answer(properties);
+        setNextQuestion();
 
         String all = "options=\"" + String.join(",", "Rift Beast", "Rift Caster", "Rift Jackal", "Rift Ogre", "Rift Ogre Mage", "Rift Summoner", "Rift Warmaster") + "\"";
 
@@ -199,12 +214,14 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
 
         Properties properties = new Properties();
         properties.setProperty("e0", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
+        setNextQuestion();
         assert !gmDidNotReceive(template1.getName());
         properties.setProperty("do_filter", "true");
         properties.setProperty("filter", "Rift*");
         question.answer(properties);
+        setNextQuestion();
 
         String all = "options=\"" + String.join(",", "Rift Beast", "Rift Caster", "Rift Jackal", "Rift Ogre", "Rift Ogre Mage", "Rift Summoner", "Rift Warmaster") + "\"";
 
@@ -224,14 +241,16 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
 
         Properties properties = new Properties();
         properties.setProperty("add", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
+        setNextQuestion();
         assert gmDidNotReceive(template1.getName());
         properties.setProperty("submit", "true");
         properties.setProperty("template", "0");
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", String.valueOf(cap));
         question.answer(properties);
+        setNextQuestion();
 
         List<SummonOption> newOptions = db.getOptionsFor(summoner);
         assertEquals(3, Objects.requireNonNull(newOptions).size());
@@ -256,14 +275,16 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
 
         Properties properties = new Properties();
         properties.setProperty("e0", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
+        setNextQuestion();
         assert !gmDidNotReceive(template1.getName());
         properties.setProperty("submit", "true");
         properties.setProperty("template", String.valueOf(templateIndex));
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", String.valueOf(cap));
         question.answer(properties);
+        setNextQuestion();
 
         List<SummonOption> newOptions = db.getOptionsFor(summoner);
         assertEquals(2, Objects.requireNonNull(newOptions).size());
@@ -291,14 +312,16 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
 
         Properties properties = new Properties();
         properties.setProperty("e0", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
+        setNextQuestion();
         assert !gmDidNotReceive(template1.getName());
         properties.setProperty("submit", "true");
         properties.setProperty("template", String.valueOf(templateIndex));
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", String.valueOf(cap));
         question.answer(properties);
+        setNextQuestion();
 
         List<SummonOption> newOptions = db.getOptionsFor(summoner);
         assertEquals(2, Objects.requireNonNull(newOptions).size());
@@ -320,14 +343,16 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
 
         Properties properties = new Properties();
         properties.setProperty("add", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
+        setNextQuestion();
         assert gmDidNotReceive(template1.getName());
         properties.setProperty("submit", "true");
         properties.setProperty("template", "0");
         properties.setProperty("price", "0");
         properties.setProperty("cap", String.valueOf(cap));
         question.answer(properties);
+        setNextQuestion();
 
         List<SummonOption> newOptions = db.getOptionsFor(summoner);
         assertEquals(3, Objects.requireNonNull(newOptions).size());
@@ -348,14 +373,16 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
 
         Properties properties = new Properties();
         properties.setProperty("add", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
+        setNextQuestion();
         assert gmDidNotReceive(template1.getName());
         properties.setProperty("submit", "true");
         properties.setProperty("template", "0");
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", "0");
         question.answer(properties);
+        setNextQuestion();
 
         List<SummonOption> newOptions = db.getOptionsFor(summoner);
         assertEquals(3, Objects.requireNonNull(newOptions).size());
@@ -382,14 +409,16 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
 
         Properties properties = new Properties();
         properties.setProperty("add", "true");
-        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
+        setNextQuestion();
         assert gmDidNotReceive(template1.getName());
         properties.setProperty("submit", "true");
         properties.setProperty("template", "0");
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", String.valueOf(cap));
         question.answer(properties);
+        setNextQuestion();
 
         List<SummonOption> newOptions = db.getOptionsFor(summoner);
         assertEquals(3, Objects.requireNonNull(newOptions).size());

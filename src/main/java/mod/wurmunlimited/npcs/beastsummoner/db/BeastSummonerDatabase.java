@@ -34,7 +34,6 @@ public class BeastSummonerDatabase extends Database {
 
     public BeastSummonerDatabase(String dbName) {
         super(dbName);
-        loadData();
     }
 
     @Override
@@ -117,7 +116,7 @@ public class BeastSummonerDatabase extends Database {
     }
 
     @SuppressWarnings("DuplicatedCode")
-    void loadData() {
+    public void loadData() {
         allProfiles.clear();
         allOptions.clear();
 

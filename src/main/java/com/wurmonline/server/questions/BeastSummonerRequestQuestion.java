@@ -56,6 +56,10 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                     state = State.ADD;
                     sendAddQuestion();
                 } else if (wasSelected("submit")) {
+                    if (summons.size() == 0) {
+                        responder.getCommunicator().sendNormalServerMessage("You decide not to summon anything at this time.");
+                        return;
+                    }
                     SummonRequest request = new SummonRequest(summoner, player, profile, summons);
                     BeastSummonerTrade trade = new BeastSummonerTrade(responder, summoner, request);
 
@@ -68,6 +72,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                     for (SummonRequest.SummonRequestDetails details : summons) {
                         handler.createTradeItem(profile, details.name, details.price);
                     }
+                    handler.addItemsToTrade();
                 } else {
                     for (int i = 0; i < summons.size(); i++) {
                         String property = answers.getProperty("r" + i);
@@ -85,7 +90,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                 if (!wasSelected("back")) {
                     for (Map.Entry<Object, Object> entry : answers.entrySet()) {
                         String val = (String)entry.getKey();
-                        if (val != null && val.length() > 0 && entry.getValue().equals("true")) {
+                        if (val != null && val.startsWith("a") && entry.getValue().equals("true")) {
                             try {
                                 int option = Integer.parseInt(val.substring(1));
                                 if (option >= 0 && option < unusedOptions.size()) {
@@ -94,8 +99,9 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                                     sendOptionQuestion(waitingForDetails);
                                     return;
                                 }
+                                throw new NumberFormatException();
                             } catch (NumberFormatException e) {
-                                getResponder().getCommunicator().sendNormalServerMessage("The summoner did not understand what you wanted summoning.");
+                                responder.getCommunicator().sendSafeServerMessage(summoner.getName() + " says 'I do not understand what you want me to summon.'");
                             }
                         }
                     }
@@ -106,26 +112,47 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                 break;
             case DETAILS:
                 if (!wasSelected("cancel")) {
+                    int amount;
+                    try {
+                        amount = Integer.parseInt(answers.getProperty("amount"));
+                    } catch (NumberFormatException e) {
+                        responder.getCommunicator().sendNormalServerMessage(summoner.getName() + " didn't understand how many " + waitingForDetails.template.getName() + " you wanted, so will provide 1.");
+                        amount = 1;
+                    }
+                    if (amount > waitingForDetails.cap) {
+                        amount = waitingForDetails.cap;
+                        responder.getCommunicator().sendSafeServerMessage(summoner.getName() + " says 'You cannot summon that many " + waitingForDetails.template.getName() + ".'");
+                    } else if (amount < 1) {
+                        amount = 1;
+                        responder.getCommunicator().sendNormalServerMessage("Amount must be 1 or greater, setting 1.");
+                    }
                     byte age;
                     try {
                         age = Byte.parseByte(answers.getProperty("age"));
+                        if (age < 0) {
+                            age = 0;
+                            responder.getCommunicator().sendNormalServerMessage("Age must be 0 or greater than 2, so it will be selected randomly.");
+                        } else if (age == 1) {
+                            age = 2;
+                            responder.getCommunicator().sendNormalServerMessage("Age must be 0 or greater than 2, setting minimum but not random.");
+                        } else if (age > 100) {
+                            age = 100;
+                            responder.getCommunicator().sendNormalServerMessage("Age must be 100 or lower, setting maximum.");
+                        }
                     } catch (NumberFormatException e) {
-                        responder.getCommunicator().sendNormalServerMessage("The summoner didn't understand the age, so will select randomly.");
+                        responder.getCommunicator().sendNormalServerMessage(summoner.getName() + " didn't understand the age, so will select randomly.");
                         age = 0;
                     }
                     byte type;
                     try {
                         type = Byte.parseByte(answers.getProperty("type"));
+
+                        if (!waitingForDetails.allowedTypes.contains(type) && type != 0) {
+                            throw new NumberFormatException();
+                        }
                     } catch (NumberFormatException e) {
-                        responder.getCommunicator().sendNormalServerMessage("The summoner didn't understand the creature type, so will select normal.");
+                        responder.getCommunicator().sendNormalServerMessage(summoner.getName() + " didn't understand the creature type, so will select normal.");
                         type = 0;
-                    }
-                    int amount;
-                    try {
-                        amount = Integer.parseInt(answers.getProperty("amount"));
-                    } catch (NumberFormatException e) {
-                        responder.getCommunicator().sendNormalServerMessage("The summoner didn't understand how many you wanted, so will provide 1.");
-                        amount = 1;
                     }
                     summons.add(new SummonRequest.SummonRequestDetails(waitingForDetails, type, age, amount));
                     unusedOptions.remove(waitingForDetails);
@@ -146,7 +173,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                         b -> b.text("This summoner requires " + profile.currency.getName() + " as payment."))
                 .newLine()
                 .table(new String[] { "Summon", "Amount", "Price", "Remove?" }, summons, (details, b) -> b
-                                                                       .label(details.option.template.getName())
+                                                                       .label(details.nameWithoutAmount)
                                                                        .label(String.valueOf(details.amount))
                                                                        .label(getPriceString(details.price))
                                                                        .button("r" + i.getAndIncrement(), "x"))
@@ -171,23 +198,26 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                                                          .label(getTypeString(option.allowedTypes))
                                                          .button("a" + i.getAndIncrement(), "Add"))
                              .build();
+
+        getResponder().getCommunicator().sendBml(350, 400, true, true, bml, 200, 200, 200, title);
     }
 
     private void sendOptionQuestion(SummonOption option) {
         List<Map.Entry<Byte, String>> creatureTypes = CreatureTypeList.creatureTypes.stream().filter(it -> option.allowedTypes.contains(it.getKey())).collect(Collectors.toList());
+        AtomicInteger i = new AtomicInteger(0);
         String bml = new BMLBuilder(id)
                          .text("Details for - " + option.template.getName())
-                         .text("Price per beast - " + option.price)
+                         .text("Price per beast - " + getPriceString(option.price))
                          .newLine()
-                         .harray(b -> b.label("Amount: ").entry("amount", "1", 3))
+                         .harray(b -> b.label("Amount: ").entry("amount", "1", 3).label("Capped at " + option.cap))
                          .harray(b -> b.label("Age (2-100): ").entry("age", "", 3).label("Blank for random."))
                          .label("Creature type:")
-                         .If(creatureTypes.isEmpty(), b -> b.radio("type", "0", "No modifier"))
+                         .If(creatureTypes.isEmpty(), b -> b.radio("type", "0", "No modifier", true))
                          .forEach(creatureTypes, (creatureType, b) ->
-                                      b.radio("type", Byte.toString(creatureType.getKey()), creatureType.getValue()))
+                                      b.radio("type", Byte.toString(creatureType.getKey()), creatureType.getValue(), i.getAndIncrement() == 0))
                          .build();
 
-        getResponder().getCommunicator().sendBml(350, 400, true, true, bml, 200, 200, 200, title);
+        getResponder().getCommunicator().sendBml(400, 350, true, true, bml, 200, 200, 200, title);
     }
 
     private String getPriceString(int price) {
@@ -197,7 +227,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
     private String getTypeString(Set<Byte> types) {
         int size = types.size();
         if (size == CreatureTypeList.all.size()) {
-            return "Yes";
+            return "Any";
         } else if (size > 1) {
             return "Some";
         } else if (size == 1) {

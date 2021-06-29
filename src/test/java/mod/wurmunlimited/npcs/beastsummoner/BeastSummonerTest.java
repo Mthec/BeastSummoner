@@ -91,7 +91,7 @@ public abstract class BeastSummonerTest {
     }
 
     @AfterEach
-    void tearDown() {
+    protected void tearDown() {
         cleanUp();
     }
 

@@ -14,6 +14,7 @@ public class SummonRequest {
         final byte age;
         final int amount;
         public final int price;
+        public final String nameWithoutAmount;
         public final String name;
 
         SummonRequestDetails(SummonOption option, byte type, byte age, int amount) {
@@ -22,7 +23,8 @@ public class SummonRequest {
             this.age = age;
             this.amount = amount;
             this.price = option.price * amount;
-            name = getTypeString(type) + age(age) + " " + option.template.getName() + " x " + amount;
+            nameWithoutAmount = getTypeString(type) + age(age) + " " + option.template.getName();
+            name = nameWithoutAmount + " x " + amount;
         }
 
         private String age(byte age) {
@@ -49,45 +51,32 @@ public class SummonRequest {
                 return "";
             }
             switch (type) {
-                case 1: {
+                case 1:
                     return "fierce ";
-                }
-                case 2: {
+                case 2:
                     return "angry ";
-                }
-                case 3: {
+                case 3:
                     return "raging ";
-                }
-                case 4: {
+                case 4:
                     return "slow ";
-                }
-                case 5: {
+                case 5:
                     return "alert ";
-                }
-                case 6: {
+                case 6:
                     return "greenish ";
-                }
-                case 7: {
+                case 7:
                     return "lurking ";
-                }
-                case 8: {
+                case 8:
                     return "sly ";
-                }
-                case 9: {
+                case 9:
                     return "hardened ";
-                }
-                case 10: {
+                case 10:
                     return "scared ";
-                }
-                case 11: {
+                case 11:
                     return "diseased ";
-                }
-                case 99: {
+                case 99:
                     return "champion ";
-                }
-                default: {
+                default:
                     return "";
-                }
             }
         }
     }

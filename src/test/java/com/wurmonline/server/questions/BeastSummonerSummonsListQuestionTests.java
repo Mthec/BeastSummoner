@@ -4,8 +4,8 @@ import com.wurmonline.server.creatures.CreatureTemplate;
 import com.wurmonline.server.creatures.CreatureTemplateFactory;
 import com.wurmonline.server.creatures.CreatureTemplateIds;
 import com.wurmonline.server.creatures.NoSuchCreatureTemplateException;
-import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTest;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
+import mod.wurmunlimited.npcs.beastsummoner.db.BeastSummonerDatabase;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -18,37 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class BeastSummonerSummonsListQuestionTests extends BeastSummonerTest {
-    // Should probably just stop using random, but I think the fuzziness helps a bit.
-    private static int lastTemplateId = -1;
-
-    private CreatureTemplate getRandomTemplate() {
-        try {
-            int templateId = new Random().nextInt(119);
-            while (templateId == lastTemplateId) {
-                templateId = new Random().nextInt(119);
-            }
-            // These templates do not exist.
-            if (Arrays.asList(
-                    0, 4, 5, 6, 7, 24, 114, 115, 116
-            ).contains(templateId)) {
-                if (lastTemplateId == 1) {
-                    templateId = 2;
-                } else {
-                    templateId = 1;
-                }
-            }
-            lastTemplateId = templateId;
-            return CreatureTemplateFactory.getInstance().getTemplate(templateId);
-        } catch (NoSuchCreatureTemplateException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String getRegex(String template) {
-        return "([\",]" + template + "[\",])";
-    }
-
+public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest {
     private boolean gmDidNotReceive(String template) {
         String last = factory.getCommunicator(gm).lastBmlContent;
         Pattern pattern = Pattern.compile(getRegex(template));
@@ -392,5 +362,40 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerTest {
         SummonOption option = newOptions.get(2);
         assertEquals(price, option.price);
         assertEquals(1, option.cap);
+    }
+
+
+    // Tags
+
+    @Test
+    void testSubmitAddTags() throws SQLException, BeastSummonerDatabase.FailedToUpdateTagException {
+        int n = 5;
+        int price = 12;
+        int cap = 34;
+        String tag = "myTag";
+        CreatureTemplate template1 = getRandomTemplate();
+        db.updateTagFor(summoner, tag);
+        db.addOption(tag, template1, n, n + 1, Collections.emptySet());
+        db.addOption(tag, getRandomTemplate(), n + 1, n + 2, Collections.emptySet());
+        List<SummonOption> oldOptions = new ArrayList<>(Objects.requireNonNull(db.getOptionsFor(summoner)));
+        assert oldOptions.size() == 2;
+
+        Properties properties = new Properties();
+        properties.setProperty("add", "true");
+        Question question = new BeastSummonerSummonsListQuestion(gm, summoner);
+        question.answer(properties);
+        assert gmDidNotReceive(template1.getName());
+        properties.setProperty("submit", "true");
+        properties.setProperty("template", "0");
+        properties.setProperty("price", String.valueOf(price));
+        properties.setProperty("cap", String.valueOf(cap));
+        question.answer(properties);
+
+        List<SummonOption> newOptions = db.getOptionsFor(summoner);
+        assertEquals(3, Objects.requireNonNull(newOptions).size());
+        SummonOption option = newOptions.get(2);
+        assertEquals(new CreatureTemplatesDropdown(oldOptions.stream().map(it -> it.template).collect(Collectors.toList())).getTemplateOrNull(0), option.template);
+        assertEquals(price, option.price);
+        assertEquals(cap, option.cap);
     }
 }

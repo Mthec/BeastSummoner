@@ -94,25 +94,30 @@ public class SummonOption {
                 Creature newCreature;
                 // !zombie
                 if (template.getTemplateId() != 69) {
+                    byte actualAge = age;
                     // Not sure why.
-                    age -= 1;
-                    if (age < 2) {
-                        age = (byte)(Server.rand.nextFloat() * 5.0F);
+                    actualAge -= 1;
+                    if (actualAge < 2) {
+                        actualAge = (byte)(Server.rand.nextFloat() * 5.0F);
                     }
 
                     if (template.getTemplateId() != 65 && template.getTemplateId() != 48 && template.getTemplateId() != 98 && template.getTemplateId() != 101 && template.getTemplateId() != 50 && template.getTemplateId() != 117 && template.getTemplateId() != 118) {
-                        if (age < 2) {
-                            age = (byte)(Server.rand.nextFloat() * (float)Math.min(48, template.getMaxAge()));
+                        if (actualAge < 2) {
+                            actualAge = (byte)(Server.rand.nextFloat() * (float)Math.min(48, template.getMaxAge()));
                         }
 
                     }
-                    newCreature = Creature.doNew(template.getTemplateId(), true, posX, posY, rot, layer, "", sex, kingdom, creType, false, age, floorLevel);
+                    newCreature = Creature.doNew(template.getTemplateId(), true, posX, posY, rot, layer, "", sex, kingdom, creType, false, actualAge, floorLevel);
                 } else {
                     newCreature = Creature.doNew(template.getTemplateId(), false, posX, posY, rot, layer, "", sex, kingdom, creType, true, (byte)0, floorLevel);
                 }
 
                 if (nameWithGenus == null) {
-                    nameWithGenus = newCreature.getNameWithGenus();
+                    if (amount == 1) {
+                        nameWithGenus = newCreature.getNameWithGenus();
+                    } else {
+                        nameWithGenus = actualAmount + " " + newCreature.getTemplate().getPlural();
+                    }
                 }
 
                 if (structureId > 0L && bridgeId > 0L) {
@@ -189,7 +194,7 @@ public class SummonOption {
         }
 
         float elapsedTime = (float)(System.nanoTime() - start) / 1000000.0F;
-        logger.info(requester.getName() + " had " + summoner.getName() + " summon " + actualAmount + " " + template.getName() + ", which took " + elapsedTime + " millis.");
+        logger.info(requester.getName() + " had " + summoner.getName() + " summon " + actualAmount + " " + (actualAmount == 1 ? template.getName() : template.getPlural()) + ", which took " + elapsedTime + " millis.");
         requester.getCommunicator().sendNormalServerMessage("You ask " + summoner.getName() + " to summon " + nameWithGenus + ".");
         Server.getInstance().broadCastAction(requester.getName() + " asks " + summoner.getName() + " to summon beasts and " + nameWithGenus + " quickly appears from nowhere.", requester, profile.range);
     }

@@ -39,13 +39,15 @@ public abstract class BeastSummonerTradeHandler extends TradeHandler {
 
     public void createTradeItem(SummonerProfile profile, String summonName, int price) {
         try {
-            Item tradeItem = new TempItem(summonName, ItemTemplateFactory.getInstance().getTemplate(ItemList.ratOnAStick), 50f, null);
+            Item tradeItem = new TempItem(summonName, ItemTemplateFactory.getInstance().getTemplate(ItemList.practiceDoll), 50f, null);
             if (profile.acceptsCoin) {
                 tradeItem.setPrice(price);
             } else {
                 tradeItem.setPrice(price * MonetaryConstants.COIN_SILVER);
             }
             tradeItem.setOwnerId(summoner.getWurmId());
+            tradeItem.setWeight(0, false);
+            summoner.getInventory().insertItem(tradeItem);
             tradeItems.add(tradeItem);
         } catch (IOException | NoSuchTemplateException e) {
             trade.creatureOne.getCommunicator().sendAlertServerMessage("Something went wrong in the mists of the void and the summoner forgot what you ordered.");

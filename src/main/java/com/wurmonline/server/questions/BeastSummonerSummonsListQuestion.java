@@ -233,6 +233,8 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
 
         AtomicInteger i = new AtomicInteger(0);
         String bml = new BMLBuilder(id)
+                             .text("Use this list to set the beasts that will be available to summon.")
+                             .newLine()
                              .If(!tag.isEmpty(), b -> b.text("This summoner is using a tag and so any changes will affect all summoners using this tag."))
                              .table(new String[] { "Summon", "Price", "Cap", "Edit", "Remove?" }, summons, (option, b) -> b
                                                           .label(option.template.getName())
@@ -240,7 +242,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                                                           .label(String.valueOf(option.cap))
                                                           .button("e" + i.getAndIncrement(), "?")
                                                           .button("r" + (i.get() - 1), "x"))
-                             .button("add", "Add")
+                             .button("add", "Add New")
                              .newLine()
                              .harray(b -> b.button("confirm", "Send"))
                              .build();
@@ -256,6 +258,8 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
         final Set<Byte> finalAllowedTypes = allowedTypes;
 
         String bml = new BMLBuilder(id)
+                             .text("Select a creature from the dropdown, then fill in the details as necessary.")
+                             .newLine()
                              .If(!tag.isEmpty(), b -> b.text("This summoner is using a tag and so any changes will affect all summoners using this tag."))
                              .dropdown("template", dropdown.getTemplatesString(), templateIndex)
                              .newLine()
@@ -275,7 +279,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                              .harray(b -> b.button("confirm", "Confirm").spacer().button("cancel", "Cancel"))
                              .build();
 
-        getResponder().getCommunicator().sendBml(350, 200, true, true, bml, 200, 200, 200, title);
+        getResponder().getCommunicator().sendBml(350, 400, true, true, bml, 200, 200, 200, title);
     }
 
     static String getPriceString(SummonerProfile profile, int price) {

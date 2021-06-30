@@ -7,17 +7,13 @@ import com.wurmonline.server.behaviours.Methods;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.ItemTemplate;
 import com.wurmonline.server.items.NoSuchTemplateException;
-import com.wurmonline.server.players.Player;
-import com.wurmonline.server.questions.ModelSetterQuestionHelper.ModelOption;
 import com.wurmonline.server.structures.Structure;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.shared.util.StringUtilities;
 import mod.wurmunlimited.bml.BML;
-import mod.wurmunlimited.npcs.FaceSetters;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 import mod.wurmunlimited.npcs.beastsummoner.db.BeastSummonerDatabase;
-import mod.wurmunlimited.npcs.db.FaceSetterDatabase;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -26,16 +22,12 @@ import java.util.List;
 import java.util.Random;
 
 import static com.wurmonline.server.creatures.CreaturePackageCaller.saveCreatureName;
-import static mod.wurmunlimited.npcs.FaceSetter.FACE_CHANGE_FAILURE;
-import static mod.wurmunlimited.npcs.FaceSetter.FACE_CHANGE_SUCCESS;
-import static mod.wurmunlimited.npcs.ModelSetter.*;
 
 public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQuestionExtension {
     private static final Random r = new Random();
+    protected static final ModelOption[] modelOptions = new ModelOption[] { ModelOption.HUMAN, ModelOption.TRADER, ModelOption.CUSTOM };
     protected static final String NO_TAG = "-";
     private final List<String> allTags;
-    private final FaceSetterQuestionHelper face;
-    private final ModelSetterQuestionHelper model;
     private final boolean isNew;
     protected final ItemTemplatesDropdown templates = new ItemTemplatesDropdown();
     protected int templateIndex = 0;
@@ -45,15 +37,6 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
         super(responder, title, "", MANAGETRADER, target);
         allTags = BeastSummonerMod.mod.db.getAllTags();
         allTags.add(0, NO_TAG);
-        face = new FaceSetterQuestionHelper(BeastSummonerMod.mod.faceSetter, summoner);
-        ModelSetterQuestionHelper model = null;
-        try {
-            model = new ModelSetterQuestionHelper(BeastSummonerMod.mod.modelSetter, summoner, ModelOption.HUMAN, ModelOption.TRADER, ModelOption.CUSTOM);
-        } catch (ModelSetterQuestionHelper.NoValidModelException e) {
-            logger.warning("No valid model found, this should never happen.");
-            e.printStackTrace();
-        }
-        this.model = model;
         isNew = summoner == null;
     }
 
@@ -138,58 +121,6 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
                 e.printStackTrace();
             }
         }
-    }
-
-    protected Creature withTempFace(FaceSetterDatabase.WithTempFace withTempFace, long tempFace) throws Exception {
-        return BeastSummonerMod.mod.faceSetter.withTempFace(withTempFace, tempFace);
-    }
-
-    private void checkSaveFace(Creature summoner, boolean isHuman) {
-        FaceSetterQuestionHelper.FaceResponse response = face.getFace(getAnswer());
-        if (response.wasError && !isNew) {
-            getResponder().getCommunicator().sendAlertServerMessage("Invalid face value, ignoring.");
-        } else if (response.wasRandom) {
-            if (response.wasError) {
-                getResponder().getCommunicator().sendAlertServerMessage("Invalid face value, setting random.");
-            }
-
-            if (isHuman) {
-                try {
-                    getResponder().getCommunicator().sendCustomizeFace(response.face, BeastSummonerMod.mod.faceSetter.createIdFor(summoner, (Player)getResponder()));
-                } catch (FaceSetters.TooManyTransactionsException e) {
-                    logger.warning(e.getMessage());
-                    getResponder().getCommunicator().sendAlertServerMessage(e.getMessage());
-                }
-            } else {
-                BeastSummonerMod.mod.faceSetter.deleteFaceFor(summoner);
-            }
-        } else {
-            try {
-                BeastSummonerMod.mod.faceSetter.setFaceFor(summoner, response.face);
-                getResponder().getCommunicator().sendNormalServerMessage(summoner.getName() + FACE_CHANGE_SUCCESS);
-            } catch (SQLException e) {
-                getResponder().getCommunicator().sendNormalServerMessage(summoner.getName() + FACE_CHANGE_FAILURE);
-                logger.warning("Failed to set face (" + response.face + ") for (" + summoner.getWurmId() + ").");
-                e.printStackTrace();
-            }
-        }
-    }
-
-    protected void checkSaveModel(Creature summoner) {
-        String currentModel = BeastSummonerMod.mod.modelSetter.getModelFor(summoner);
-        String modelName = model.getModelName(getAnswer(), HUMAN_MODEL_NAME);
-        if (!modelName.equals(currentModel)) {
-            try {
-                BeastSummonerMod.mod.modelSetter.setModelFor(summoner, modelName);
-                getResponder().getCommunicator().sendNormalServerMessage(summoner.getName() + MODEL_CHANGE_SUCCESS);
-            } catch (SQLException e) {
-                getResponder().getCommunicator().sendNormalServerMessage(summoner.getName() + MODEL_CHANGE_FAILURE);
-                logger.warning("Failed to set model (" + modelName + ") for (" + summoner.getWurmId() + ").");
-                e.printStackTrace();
-            }
-        }
-
-        checkSaveFace(summoner, modelName.equals(HUMAN_MODEL_NAME));
     }
 
     protected String getTag() {
@@ -330,14 +261,13 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
     // sendQuestion
 
     protected BML middleBML(BML bml, String namePlaceholder) {
-        return model.addQuestion(
-                face.addQuestion(bml
+        return bml
                        .text("Use a 'tag' to use the same summoning options for multiple summoners.")
                        .text("Leave blank to keep the summoning options unique to this summoner.")
                        .newLine()
                        .harray(b -> b.label("Name: " + getPrefix()).entry("name", namePlaceholder, BeastSummonerMod.maxNameLength))
                        .text("Leave blank for a random name.").italic()
-                       .newLine()));
+                       .newLine();
     }
 
     private BML addTagSelector(BML bml, String currentTag) {
@@ -368,6 +298,8 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
                        .radio("gender", "male", "Male", gender)
                        .radio("gender", "female", "Female", !gender)
                        .newLine()
+                       .checkbox("customise" ,"Open appearance customiser?", true)
+                       .newLine()
                        .harray(b -> b.button("Send"))
                        .build();
     }
@@ -377,6 +309,7 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
                        .harray(b -> b
                             .button("confirm", "Confirm").spacer()
                             .button("list", "Summons List").spacer()
+                            .button("customise", "Appearance").spacer()
                             .button("dismiss", "Dismiss").confirm("Dismiss summoner", "Are you sure you wish to dismiss " + summoner.getName() + "?").spacer()
                             .button("cancel", "Cancel").spacer())
                        .build();

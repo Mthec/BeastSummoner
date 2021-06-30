@@ -4,6 +4,7 @@ import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.zones.VolaTile;
 import mod.wurmunlimited.bml.BML;
 import mod.wurmunlimited.bml.BMLBuilder;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTemplate;
 
 import java.sql.SQLException;
@@ -25,7 +26,7 @@ public class PlaceBeastSummonerQuestion extends BeastSummonerPlaceOrManageQuesti
         Creature responder = getResponder();
 
         if (doFilter()) {
-            sendQuestion();
+            new PlaceBeastSummonerQuestion(responder, tile, floorLevel).sendQuestion();
         } else {
             byte sex = getGender();
             String name = getName(sex);
@@ -35,7 +36,10 @@ public class PlaceBeastSummonerQuestion extends BeastSummonerPlaceOrManageQuesti
                 try {
                     Creature summoner = BeastSummonerTemplate.createNewSummoner(tile, floorLevel, name, sex, responder.getKingdomId(), getCurrencyTemplate(), tag);
                     logger.info(responder.getName() + " created a summoner: " + summoner.getWurmId());
-                    checkSaveModel(summoner);
+
+                    if (wasSelected("customise")) {
+                        new CreatureCustomiserQuestion(responder, summoner, BeastSummonerMod.mod.faceSetter, BeastSummonerMod.mod.modelSetter, modelOptions).sendQuestion();
+                    }
                 } catch (SQLException e) {
                     responder.getCommunicator().sendAlertServerMessage("An error occurred in the rifts of the void. The summoner was created, but some of their details were not set.");
                     e.printStackTrace();

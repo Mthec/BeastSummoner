@@ -20,21 +20,28 @@ public class BeastSummonerManagementQuestion extends BeastSummonerPlaceOrManageQ
         currentTag = BeastSummonerMod.mod.db.getTagFor(summoner);
     }
 
+    private BeastSummonerManagementQuestion(Creature responder, Creature summoner, String currentTag) {
+        super(responder, summoner);
+        this.summoner = summoner;
+        this.currentTag = currentTag;
+    }
+
     @Override
     public void answer(Properties answers) {
         setAnswer(answers);
 
         if (doFilter()) {
-            sendQuestion();
+            new BeastSummonerManagementQuestion(getResponder(), summoner, currentTag).sendQuestion();
         } else if (wasSelected("confirm")) {
             checkSaveName(summoner);
-            checkSaveModel(summoner);
             checkSaveCurrency(summoner);
             checkSaveTag(summoner, currentTag);
         } else if (wasSelected("edit")) {
             new BeastSummonerEditTagsQuestion(getResponder()).sendQuestion();
         } else if (wasSelected("list")) {
             new BeastSummonerSummonsListQuestion(getResponder(), summoner).sendQuestion();
+        } else if (wasSelected("customise")) {
+            new CreatureCustomiserQuestion(getResponder(), summoner, BeastSummonerMod.mod.faceSetter, BeastSummonerMod.mod.modelSetter, modelOptions).sendQuestion();
         } else if (wasSelected("dismiss")) {
             tryDismiss(summoner);
         }

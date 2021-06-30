@@ -20,7 +20,6 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import static mod.wurmunlimited.Assert.*;
-import static mod.wurmunlimited.npcs.ModelSetter.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,53 +64,6 @@ public class BeastSummonerManagementQuestionTests extends BeastSummonerTest {
 
         new BeastSummonerManagementQuestion(gm, summoner).sendQuestion();
         assertThat(gm, receivedBMLContaining("tag1,tag2,tag3"));
-    }
-
-    @Test
-    void testProperlyGetFace() throws SQLException {
-        long face = 24680;
-        BeastSummonerMod.mod.faceSetter.setFaceFor(summoner, face);
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, HUMAN_MODEL_NAME);
-
-        new BeastSummonerManagementQuestion(gm, summoner).sendQuestion();
-        assertThat(gm, receivedBMLContaining(face + "\";id=\"face\""));
-    }
-
-    @Test
-    void testProperlyGetFaceIfNotHuman() throws SQLException {
-        assert BeastSummonerMod.mod.faceSetter.getFaceFor(summoner) == null;
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, TRADER_MODEL_NAME);
-
-        new BeastSummonerManagementQuestion(gm, summoner).sendQuestion();
-        assertThat(gm, receivedBMLContaining("\"\";id=\"face\""));
-    }
-
-    @Test
-    void testProperlyGetsModelTrader() throws SQLException {
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, TRADER_MODEL_NAME);
-
-        new BeastSummonerManagementQuestion(gm, summoner).sendQuestion();
-        assertThat(gm, receivedBMLContaining("id=\"trader\";text=\"Trader\";selected=\"true\""));
-        assertThat(gm, receivedBMLContaining("text=\"\";id=\"custom_model\""));
-    }
-
-    @Test
-    void testProperlyGetsModelHuman() throws SQLException {
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, HUMAN_MODEL_NAME);
-
-        new BeastSummonerManagementQuestion(gm, summoner).sendQuestion();
-        assertThat(gm, receivedBMLContaining("id=\"human\";text=\"Human\";selected=\"true\""));
-        assertThat(gm, receivedBMLContaining("text=\"\";id=\"custom_model\""));
-    }
-
-    @Test
-    void testProperlyGetsModel() throws SQLException {
-        String model = "custom.model";
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, model);
-
-        new BeastSummonerManagementQuestion(gm, summoner).sendQuestion();
-        assertThat(gm, receivedBMLContaining("id=\"custom\";text=\"Custom\";selected=\"true\""));
-        assertThat(gm, receivedBMLContaining(model + "\";id=\"custom_model\""));
     }
 
     // answer
@@ -208,110 +160,27 @@ public class BeastSummonerManagementQuestionTests extends BeastSummonerTest {
     }
 
     @Test
-    void testCustomizeFaceSent() throws SQLException {
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, HUMAN_MODEL_NAME);
-        long oldFace = 112358;
-        BeastSummonerMod.mod.faceSetter.setFaceFor(summoner, oldFace);
-        Properties properties = new Properties();
-        properties.setProperty("face", "");
-        properties.setProperty("model", "human");
-        properties.setProperty("confirm", "true");
-        new BeastSummonerManagementQuestion(gm, summoner).answer(properties);
-
-        assertEquals(oldFace, (long)BeastSummonerMod.mod.faceSetter.getFaceFor(summoner));
-        assertNotNull(factory.getCommunicator(gm).sendCustomizeFace);
-        assertThat(gm, didNotReceiveMessageContaining("Invalid"));
-    }
-
-    @Test
-    void testFaceChanged() throws SQLException {
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, HUMAN_MODEL_NAME);
-        long newFace = 112358;
-        BeastSummonerMod.mod.faceSetter.setFaceFor(summoner, newFace + 1);
+    void testNothingChangesAndQuestionSentOnCustomise() throws NoSuchCreatureTemplateException, SQLException {
+        assert db.getTagFor(summoner).equals("");
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.PHEASANT_CID), 1, 1, Collections.emptySet());
+        String name = summoner.getName();
 
         Properties properties = new Properties();
-        properties.setProperty("face", Long.toString(newFace));
-        properties.setProperty("model", "human");
-        properties.setProperty("confirm", "true");
+        properties.setProperty("customise", "true");
+        properties.setProperty("name", "anything");
+        properties.setProperty("currency", "21");
+        properties.setProperty("tag", "something");
         new BeastSummonerManagementQuestion(gm, summoner).answer(properties);
 
-        assertEquals(newFace, (long)BeastSummonerMod.mod.faceSetter.getFaceFor(summoner));
-        assertNull(factory.getCommunicator(gm).sendCustomizeFace);
-        assertThat(gm, didNotReceiveMessageContaining("Invalid"));
-    }
+        assertEquals("", db.getTagFor(summoner));
+        assertEquals(1, Objects.requireNonNull(db.getOptionsFor(summoner)).size());
+        assertNull(Objects.requireNonNull(db.getProfileFor(summoner)).currency);
+        assertEquals(name, summoner.getName());
+        assertThat(gm, didNotReceiveMessageContaining("takes a new form"));
+        assertThat(gm, didNotReceiveMessageContaining("known as"));
 
-    @Test
-    void testInvalidFace() throws SQLException {
-        long oldFace = 112358;
-        BeastSummonerMod.mod.faceSetter.setFaceFor(summoner, oldFace);
-        Properties properties = new Properties();
-        properties.setProperty("face", "abc");
-        properties.setProperty("confirm", "true");
-        new BeastSummonerManagementQuestion(gm, summoner).answer(properties);
-
-        assertEquals(oldFace, (long)BeastSummonerMod.mod.faceSetter.getFaceFor(summoner));
-        assertNull(factory.getCommunicator(gm).sendCustomizeFace);
-        assertThat(gm, receivedMessageContaining("Invalid"));
-    }
-
-    @Test
-    void testAsksForFaceIfModelSetHuman() throws SQLException {
-        String oldModel = "old.model";
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, oldModel);
-        assert BeastSummonerMod.mod.faceSetter.getFaceFor(summoner) == null;
-        Properties properties = new Properties();
-        properties.setProperty("model", "human");
-        properties.setProperty("confirm", "true");
-        new BeastSummonerManagementQuestion(gm, summoner).answer(properties);
-
-        assertEquals(HUMAN_MODEL_NAME, BeastSummonerMod.mod.modelSetter.getModelFor(summoner));
-        assertNotNull(factory.getCommunicator(gm).sendCustomizeFace);
-    }
-
-    @Test
-    void testModelSetTrader() throws SQLException {
-        String oldModel = "old.model";
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, oldModel);
-        Properties properties = new Properties();
-        properties.setProperty("model", "trader");
-        properties.setProperty("custom_model", "blah");
-        properties.setProperty("confirm", "true");
-        new BeastSummonerManagementQuestion(gm, summoner).answer(properties);
-
-        assertEquals(TRADER_MODEL_NAME, BeastSummonerMod.mod.modelSetter.getModelFor(summoner));
-        assertThat(gm, receivedMessageContaining(MODEL_CHANGE_SUCCESS));
-        assertThat(gm, didNotReceiveMessageContaining(MODEL_CHANGE_FAILURE));
-    }
-
-    @Test
-    void testModelSetHuman() throws SQLException {
-        String oldModel = "old.model";
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, oldModel);
-        Properties properties = new Properties();
-        properties.setProperty("model", "human");
-        properties.setProperty("custom_model", "blah");
-        properties.setProperty("confirm", "true");
-        new BeastSummonerManagementQuestion(gm, summoner).answer(properties);
-
-        assertEquals(HUMAN_MODEL_NAME, BeastSummonerMod.mod.modelSetter.getModelFor(summoner));
-        assertThat(gm, receivedMessageContaining(MODEL_CHANGE_SUCCESS));
-        assertThat(gm, didNotReceiveMessageContaining(MODEL_CHANGE_FAILURE));
-    }
-
-    @Test
-    void testModelSetCustom() throws SQLException {
-        String oldModel = "old.model";
-        String customModel = "custom.model";
-        BeastSummonerMod.mod.modelSetter.setModelFor(summoner, oldModel);
-        Properties properties = new Properties();
-        properties.setProperty("model", "custom");
-        properties.setProperty("custom_model", customModel);
-        properties.setProperty("confirm", "true");
-        new BeastSummonerManagementQuestion(gm, summoner).answer(properties);
-
-        assertEquals(customModel, BeastSummonerMod.mod.modelSetter.getModelFor(summoner));
-        assertThat(gm, receivedMessageContaining(MODEL_CHANGE_SUCCESS));
-        assertThat(gm, didNotReceiveMessageContaining(MODEL_CHANGE_FAILURE));
+        new CreatureCustomiserQuestion(gm, summoner, BeastSummonerMod.mod.faceSetter, BeastSummonerMod.mod.modelSetter, ModelOption.HUMAN, ModelOption.TRADER, ModelOption.CUSTOM).sendQuestion();
+        assertThat(gm, bmlEqual());
     }
 
     @Test

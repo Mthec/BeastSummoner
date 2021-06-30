@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import static mod.wurmunlimited.Assert.*;
 import static mod.wurmunlimited.npcs.ModelSetter.*;
@@ -26,6 +27,27 @@ import static org.junit.jupiter.api.Assertions.*;
 public class BeastSummonerManagementQuestionTests extends BeastSummonerTest {
     private static final String tag = "MyTag";
     private static final String differentTag = "different";
+
+    @Test
+    void testProperlySetsCurrentCurrencyIfMoney() throws NoSuchTemplateException, SQLException {
+        db.setCurrencyFor(summoner, -1);
+
+        new BeastSummonerManagementQuestion(gm, summoner).sendQuestion();
+        Pattern pattern = Pattern.compile("id=\"template\";options=\"[\\w, '-]+\";default=\"0\"");
+        String last = factory.getCommunicator(gm).lastBmlContent;
+        assertTrue(pattern.matcher(last).find(), last);
+    }
+
+    @Test
+    void testProperlySetsCurrentCurrencyIfTopOfList() throws NoSuchTemplateException, SQLException {
+        int currency = Objects.requireNonNull(new ItemTemplatesDropdown().getTemplateOrNull(0)).getTemplateId();
+        db.setCurrencyFor(summoner, currency);
+
+        new BeastSummonerManagementQuestion(gm, summoner).sendQuestion();
+        Pattern pattern = Pattern.compile("id=\"template\";options=\"[\\w, '-]+\";default=\"1\"");
+        String last = factory.getCommunicator(gm).lastBmlContent;
+        assertTrue(pattern.matcher(last).find(), last);
+    }
 
     @Test
     void testProperlyGetsCurrentTag() throws BeastSummonerDatabase.FailedToUpdateTagException {
@@ -487,7 +509,7 @@ public class BeastSummonerManagementQuestionTests extends BeastSummonerTest {
         properties.setProperty("confirm", "true");
         int templateIndex = 101;
         ItemTemplatesDropdown template = new ItemTemplatesDropdown();
-        int templateId = template.getTemplateOrNull(templateIndex - 1).getTemplateId();
+        int templateId = Objects.requireNonNull(template.getTemplateOrNull(templateIndex - 1)).getTemplateId();
         properties.setProperty("template", String.valueOf(templateIndex));
         new BeastSummonerManagementQuestion(gm, summoner).answer(properties);
 
@@ -500,6 +522,6 @@ public class BeastSummonerManagementQuestionTests extends BeastSummonerTest {
         db.setCurrencyFor(summoner, ItemList.sprout);
         new BeastSummonerManagementQuestion(gm, summoner).sendQuestion();
 
-        assertThat(gm, receivedBMLContaining("default=\"" + new ItemTemplatesDropdown().getIndexOf(Objects.requireNonNull(db.getProfileFor(summoner)).currency) + "\""));
+        assertThat(gm, receivedBMLContaining("default=\"" + (new ItemTemplatesDropdown().getIndexOf(Objects.requireNonNull(db.getProfileFor(summoner)).currency) + 1) + "\""));
     }
 }

@@ -79,7 +79,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
             case LIST:
                 if (wasSelected("add")) {
                     new BeastSummonerRequestQuestion(this, State.ADD);
-                } else if (wasSelected("submit")) {
+                } else if (wasSelected("confirm")) {
                     if (summons.size() == 0) {
                         responder.getCommunicator().sendNormalServerMessage("You decide not to summon anything at this time.");
                         return;
@@ -187,7 +187,15 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
     @Override
     public void sendQuestion() {
         AtomicInteger i = new AtomicInteger(0);
-        String bml = new BMLBuilder(id)
+        String bml;
+        if (summons.isEmpty()) {
+            bml = new BMLBuilder(id)
+                .text("This summoner is not currently able to summon any beasts.")
+                .newLine()
+                .harray(b -> b.button("cancel", "Send"))
+                .build();
+        } else {
+            bml = new BMLBuilder(id)
                 .text("Create the list of beasts you would like to summon.")
                 .If(profile.acceptsCoin,
                         b -> b.text("This summoner requires coin as payment."),
@@ -201,8 +209,9 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                 .button("add", "Add")
                 .label("Current total - " + getPriceString(summons.stream().mapToInt(it -> it.price).sum()))
                 .newLine()
-                .harray(b -> b.button("submit", "Send").spacer().button("cancel", "Cancel"))
+                .harray(b -> b.button("confirm", "Send").spacer().button("cancel", "Cancel"))
                 .build();
+        }
 
         getResponder().getCommunicator().sendBml(350, 400, true, true, bml, 200, 200, 200, title);
     }

@@ -65,7 +65,9 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
         this(responder, "Manage Beast Summoner", summoner.getWurmId(), summoner);
         SummonerProfile profile = BeastSummonerMod.mod.db.getProfileFor(summoner);
         if (profile != null) {
-            templateIndex = templates.getIndexOf(profile.currency);
+            if (!profile.acceptsCoin) {
+                templateIndex = templates.getIndexOf(profile.currency) + 1;
+            }
         }
     }
 

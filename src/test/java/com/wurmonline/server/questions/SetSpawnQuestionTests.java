@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Properties;
 
-import static mod.wurmunlimited.Assert.bmlEqual;
-import static mod.wurmunlimited.Assert.receivedMessageContaining;
+import static mod.wurmunlimited.Assert.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -44,6 +43,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         assertEquals(currentSpawn, profile.spawnPointCentre);
         assertEquals(currentRange, profile.range);
         assertEquals(currentFloor, profile.floorLevel);
+        assertThat(gm, didNotReceiveMessageContaining("successfully set"));
     }
 
     @Test
@@ -54,7 +54,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         int currentFloor = profile.floorLevel;
         int currentRange = profile.range;
         Properties properties = new Properties();
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("range", String.valueOf(currentRange));
         VolaTile newTile = Zones.getOrCreateTile(123, 456, true);
         assert newTile != null;
@@ -66,6 +66,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         assertEquals(newTile, profile.spawnPointCentre);
         assertEquals(currentRange, profile.range);
         assertEquals(currentFloor, profile.floorLevel);
+        assertThat(gm, receivedMessageContaining("successfully set"));
     }
 
     @Test
@@ -76,7 +77,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         int currentFloor = profile.floorLevel;
         int newRange = profile.range + 1;
         Properties properties = new Properties();
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("range", String.valueOf(newRange));
         new SetSpawnQuestion(gm, summoner, currentSpawn, profile.floorLevel).answer(properties);
 
@@ -85,6 +86,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         assertEquals(currentSpawn, profile.spawnPointCentre);
         assertEquals(newRange, profile.range);
         assertEquals(currentFloor, profile.floorLevel);
+        assertThat(gm, receivedMessageContaining("successfully set"));
     }
 
     @Test
@@ -95,7 +97,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         int currentFloor = profile.floorLevel;
         int currentRange = profile.range;
         Properties properties = new Properties();
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("range", "-1");
         new SetSpawnQuestion(gm, summoner, currentSpawn, profile.floorLevel).answer(properties);
 
@@ -115,7 +117,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         int currentFloor = profile.floorLevel;
         int currentRange = profile.range;
         Properties properties = new Properties();
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("range", "abc");
         new SetSpawnQuestion(gm, summoner, currentSpawn, profile.floorLevel).answer(properties);
 
@@ -135,7 +137,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         int currentFloor = profile.floorLevel;
         int currentRange = profile.range;
         Properties properties = new Properties();
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("range", String.valueOf(currentRange));
         new SetSpawnQuestion(gm, summoner, currentSpawn, profile.floorLevel + 1).answer(properties);
 
@@ -144,6 +146,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         assertEquals(currentSpawn, profile.spawnPointCentre);
         assertEquals(currentRange, profile.range);
         assertEquals(currentFloor + 1, profile.floorLevel);
+        assertThat(gm, receivedMessageContaining("successfully set"));
     }
 
     private void checkTile(int x, int y) {
@@ -242,7 +245,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         assertEquals(1, currentSpawn.getItems().length);
 
         properties.remove("survey");
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         question.answer(properties);
 
         profile = db.getProfileFor(summoner);
@@ -251,6 +254,7 @@ public class SetSpawnQuestionTests extends BeastSummonerTest {
         assertEquals(0, profile.range);
         assertEquals(currentFloor, profile.floorLevel);
 
+        assertThat(gm, receivedMessageContaining("successfully set"));
         assertEquals(0, currentSpawn.getItems().length);
     }
 }

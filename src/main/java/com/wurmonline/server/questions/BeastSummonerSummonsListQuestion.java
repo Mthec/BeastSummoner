@@ -86,7 +86,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
 
         switch (state) {
             case LIST:
-                if (wasSelected("submit")) {
+                if (wasSelected("confirm")) {
                     break;
                 }
 
@@ -133,7 +133,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                 if (wasSelected("do_filter")) {
                     parseFilterAndResend(1, 1);
                     break;
-                } else if (wasSelected("submit")) {
+                } else if (wasSelected("confirm")) {
                     parseOption(1, 1);
                 }
 
@@ -143,7 +143,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                 if (wasSelected("do_filter")) {
                     parseFilterAndResend(editOption.price, editOption.cap);
                     break;
-                } else if (wasSelected("submit")) {
+                } else if (wasSelected("confirm")) {
                     parseOption(editOption.price, editOption.cap);
                 }
 
@@ -242,7 +242,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                                                           .button("r" + (i.get() - 1), "x"))
                              .button("add", "Add")
                              .newLine()
-                             .harray(b -> b.button("submit", "Send"))
+                             .harray(b -> b.button("confirm", "Send"))
                              .build();
 
         getResponder().getCommunicator().sendBml(350, 400, true, true, bml, 200, 200, 200, title);
@@ -272,7 +272,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                              .checkbox("tall", "All (overrides below)", allSelected)
                              .forEach(CreatureTypeList.creatureTypes, (creatureType, b) -> b.checkbox("t" + creatureType.getKey(), creatureType.getValue(), finalAllowedTypes.contains(creatureType.getKey())))
                              .newLine()
-                             .harray(b -> b.button("submit", "Confirm").spacer().button("cancel", "Cancel"))
+                             .harray(b -> b.button("confirm", "Confirm").spacer().button("cancel", "Cancel"))
                              .build();
 
         getResponder().getCommunicator().sendBml(350, 200, true, true, bml, 200, 200, 200, title);

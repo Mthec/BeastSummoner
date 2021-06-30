@@ -76,7 +76,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
 
     private void submit() {
         Properties properties = new Properties();
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         question.answer(properties);
     }
 
@@ -105,6 +105,14 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         properties.setProperty("type", String.valueOf(type));
         question.answer(properties);
         setNextQuestion();
+    }
+
+    @Test
+    void testNotAbleMessageIfNoSummonsAvailable() {
+        assert db.getOptionsFor(summoner) == null;
+        new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
+
+        assertThat(player, receivedBMLContaining("not currently able"));
     }
 
     @Test

@@ -14,7 +14,7 @@ public class BeastSummonerManagementQuestion extends BeastSummonerPlaceOrManageQ
     private final Creature summoner;
     private final String currentTag;
 
-    protected BeastSummonerManagementQuestion(Creature responder, Creature summoner) {
+    public BeastSummonerManagementQuestion(Creature responder, Creature summoner) {
         super(responder, summoner);
         this.summoner = summoner;
         currentTag = BeastSummonerMod.mod.db.getTagFor(summoner);

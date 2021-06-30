@@ -36,6 +36,14 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
         }
     }
 
+    private SetSpawnQuestion(SetSpawnQuestion oldQuestion) {
+        super(oldQuestion.getResponder(), "Set Spawn", "", MANAGETRADER, oldQuestion.settingFor.getWurmId());
+        settingFor = oldQuestion.settingFor;
+        tile = oldQuestion.tile;
+        floorLevel = oldQuestion.floorLevel;
+        range = oldQuestion.range;
+    }
+
     @Override
     public void answer(Properties answers) {
         setAnswer(answers);
@@ -67,7 +75,7 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
                 int y = xY[1];
 
                 try {
-                    final Item item = ItemFactory.createItem(ItemList.buildMarker, 80.0f, this.getResponder().getName());
+                    final Item item = ItemFactory.createItem(ItemList.perimeterMarker, 80.0f, this.getResponder().getName());
                     item.setPosXYZ((float)((x << 2) + 2), (float)((y << 2) + 2), Zones.calculateHeight((float)((x << 2) + 2), (float)((y << 2) + 2), tile.isOnSurface()) + 5.0f);
                     // TODO - What about floor?
                     Zones.getZone(x, y, tile.isOnSurface()).addItem(item);
@@ -76,10 +84,11 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
                 }
             }
 
-            sendQuestion();
-        } else if (wasSelected("submit")) {
+            new SetSpawnQuestion(this).sendQuestion();
+        } else if (wasSelected("confirm")) {
             try {
                 BeastSummonerMod.mod.db.setSpawnFor(settingFor, tile, range, floorLevel);
+                responder.getCommunicator().sendNormalServerMessage("You successfully set " + settingFor.getName() + "'s spawn point.");
             } catch (SQLException e) {
                 responder.getCommunicator().sendAlertServerMessage("Something went wrong and the spawn was not set.");
                 e.printStackTrace();
@@ -131,7 +140,7 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
                 if (tile != null) {
                     boolean notFound = true;
                     for (Item item : tile.getItems()) {
-                        if (item.getTemplateId() == ItemList.buildMarker) {
+                        if (item.getTemplateId() == ItemList.perimeterMarker) {
                             notFound = false;
                             item.removeAndEmpty();
                             break;
@@ -156,7 +165,8 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
                                            tile.getTileX() + ", " + tile.getTileY() + ".")
                              .harray(b -> b.label("Range: ").entry("range", Integer.toString(range), 3))
                              .text("How far in tiles the summoner will spawn beasts from this point.")
-                             .harray(b -> b.button("submit", "Send").spacer().button("survey", "Survey Area").spacer().button("cancel", "Cancel"))
+                             .newLine()
+                             .harray(b -> b.button("confirm", "Send").spacer().button("survey", "Survey Area").spacer().button("cancel", "Cancel"))
                              .build();
 
         getResponder().getCommunicator().sendBml(250, 300, true, true, bml, 200, 200, 200, title);

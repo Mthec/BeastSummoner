@@ -88,6 +88,7 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
         faceSetter = new FaceSetter(BeastSummonerTemplate::is, dbName);
         modelSetter = new ModelSetter(BeastSummonerTemplate::is, dbName);
 
+        ModActions.registerAction(new ManageBeastSummonerAction());
         ModActions.registerAction(new StartSetSpawnAction());
         ModActions.registerAction(new SetSpawnAction());
         ModActions.registerAction(new CancelSetSpawnAction());

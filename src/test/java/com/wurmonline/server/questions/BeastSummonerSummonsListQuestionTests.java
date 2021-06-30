@@ -63,7 +63,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         Properties properties = new Properties();
         properties.setProperty("r0", "true");
         properties.setProperty("e0", "true");
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         new BeastSummonerSummonsListQuestion(gm, summoner).answer(properties);
 
         List<SummonOption> options = db.getOptionsFor(summoner);
@@ -245,7 +245,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         question.answer(properties);
         setNextQuestion();
         assert gmDidNotReceive(template1.getName());
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("template", "0");
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", String.valueOf(cap));
@@ -279,7 +279,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         question.answer(properties);
         setNextQuestion();
         assert !gmDidNotReceive(template1.getName());
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("template", String.valueOf(templateIndex));
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", String.valueOf(cap));
@@ -316,7 +316,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         question.answer(properties);
         setNextQuestion();
         assert !gmDidNotReceive(template1.getName());
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("template", String.valueOf(templateIndex));
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", String.valueOf(cap));
@@ -347,7 +347,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         question.answer(properties);
         setNextQuestion();
         assert gmDidNotReceive(template1.getName());
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("template", "0");
         properties.setProperty("price", "0");
         properties.setProperty("cap", String.valueOf(cap));
@@ -377,7 +377,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         question.answer(properties);
         setNextQuestion();
         assert gmDidNotReceive(template1.getName());
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("template", "0");
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", "0");
@@ -413,7 +413,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         question.answer(properties);
         setNextQuestion();
         assert gmDidNotReceive(template1.getName());
-        properties.setProperty("submit", "true");
+        properties.setProperty("confirm", "true");
         properties.setProperty("template", "0");
         properties.setProperty("price", String.valueOf(price));
         properties.setProperty("cap", String.valueOf(cap));

@@ -99,7 +99,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                     String property = answers.getProperty("r" + i);
                     if (property != null && property.equals("true")) {
                         try {
-                            SummonOption option = summons.get(i);
+                            SummonOption option = summons.remove(i);
                             if (option != null) {
                                 if (tag.isEmpty()) {
                                     BeastSummonerMod.mod.db.deleteOption(summoner, option);
@@ -190,6 +190,16 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
 
                     try {
                         SummonOption option = BeastSummonerMod.mod.db.updateOption(summoner, editOption, template, price, cap, getAllowedTypes());
+                        if (editOption != null) {
+                            int idx = summons.indexOf(editOption);
+                            if (idx >= 0) {
+                                summons.set(idx, option);
+                            } else {
+                                summons.add(option);
+                            }
+                        } else {
+                            summons.add(option);
+                        }
                     } catch (SQLException e) {
                         getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not saved.");
                         logger.warning("Error saving summon option with (" + price + ", " + cap + ").");
@@ -266,15 +276,15 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                              .text("Filter available templates:")
                              .text("* is a wildcard that stands in for one or more characters.\ne.g. *dragon* to find all dragons and hatchlings or Rift* to find all rift creatures.")
                              .newLine()
-                             .harray(b -> b.label("Price").spacer()
-                                           .entry("price", Integer.toString(price), 10).spacer()
+                             .harray(b -> b.label("Price:")
+                                           .entry("price", Integer.toString(price), 10)
                                            .text(priceSuffix))
                              .harray(b -> b.label("Cap: ").entry("cap", Integer.toString(cap), 3))
                              .text("The maximum number players are allowed to summon in one purchase.").italic()
                              .newLine()
                              .label("Creature type modifier (if applicable):")
                              .checkbox("tall", "All (overrides below)", allSelected)
-                             .forEach(CreatureTypeList.creatureTypes, (creatureType, b) -> b.checkbox("t" + creatureType.getKey(), creatureType.getValue(), finalAllowedTypes.contains(creatureType.getKey())))
+                             .forEach(CreatureTypeList.creatureTypes, (creatureType, b) -> b.checkbox("t" + creatureType.first, creatureType.second, finalAllowedTypes.contains(creatureType.first)))
                              .newLine()
                              .harray(b -> b.button("confirm", "Confirm").spacer().button("cancel", "Cancel"))
                              .build();

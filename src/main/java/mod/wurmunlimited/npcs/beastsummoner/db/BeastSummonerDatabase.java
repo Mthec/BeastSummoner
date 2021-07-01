@@ -130,7 +130,7 @@ public class BeastSummonerDatabase extends Database {
                         int x = profiles.getInt(2);
                         int y = profiles.getInt(3);
                         boolean surfaced = profiles.getBoolean(4);
-                        VolaTile spawn = Zones.getTileOrNull(x, y, surfaced);
+                        VolaTile spawn = Zones.getOrCreateTile(x, y, surfaced);
 
                         if (spawn == null) {
                             logger.warning("Spawn centre tile not found (" + x + ", " + y + ", " + surfaced + "), ignoring summoner.");
@@ -425,8 +425,8 @@ public class BeastSummonerDatabase extends Database {
                 ps.setInt(1, tile.getTileX());
                 ps.setInt(2, tile.getTileY());
                 ps.setBoolean(3, tile.isOnSurface());
-                ps.setInt(4, floorLevel);
-                ps.setInt(5, range);
+                ps.setInt(4, range);
+                ps.setInt(5, floorLevel);
                 ps.setLong(6, summoner.getWurmId());
                 ps.execute();
             });

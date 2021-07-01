@@ -4,6 +4,7 @@ import com.wurmonline.server.creatures.*;
 import com.wurmonline.server.economy.Economy;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.items.Trade;
+import mod.wurmunlimited.creaturecustomiser.Pair;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 import org.junit.jupiter.api.Test;
@@ -113,6 +114,26 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
 
         assertThat(player, receivedBMLContaining("not currently able"));
+    }
+
+    @Test
+    void testDoesNotSendNotAbleMessageIfSummonsAvailableButNoneSelected() {
+        createOptions(getRandomTemplate(), getRandomTemplate(), 5);
+        new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
+
+        assertThat(player, didNotReceiveBMLContaining("not currently able"));
+    }
+
+    @Test
+    void testDoesNotSendNotAbleMessageIfNoUnusedSummonsAvailable() throws SQLException {
+        db.addOption(summoner, getRandomTemplate(), 5, 6, Collections.emptySet());
+        question = new BeastSummonerRequestQuestion(player, summoner);
+        add();
+        selectFirstOption();
+        factory.getCommunicator(player).clearBml();
+        setOptionDetails(1, (byte)0, (byte)0);
+
+        assertThat(player, didNotReceiveBMLContaining("not currently able"));
     }
 
     @Test
@@ -391,9 +412,9 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         selectFirstOption();
 
         List<String> entries = new ArrayList<>();
-        for (Map.Entry<Byte, String> entry : CreatureTypeList.creatureTypes) {
-            entries.add("radio\\{group=\"type\";id=\"" + entry.getKey() + "\";text=\"" + entry.getValue() + "\"" +
-                                (entry.getKey() == 0 ? ";selected=\"true\"" : "") +
+        for (Pair<Byte, String> entry : CreatureTypeList.creatureTypes) {
+            entries.add("radio\\{group=\"type\";id=\"" + entry.first + "\";text=\"" + entry.second + "\"" +
+                                (entry.first == 0 ? ";selected=\"true\"" : "") +
                                 "}");
         }
         Pattern pattern = Pattern.compile(String.join("", entries) + "}};null;null;}$");

@@ -262,9 +262,6 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
 
     protected BML middleBML(BML bml, String namePlaceholder) {
         return bml
-                       .text("Use a 'tag' to use the same summoning options for multiple summoners.")
-                       .text("Leave blank to keep the summoning options unique to this summoner.")
-                       .newLine()
                        .harray(b -> b.label("Name: " + getPrefix()).entry("name", namePlaceholder, BeastSummonerMod.maxNameLength))
                        .text("Leave blank for a random name.").italic()
                        .newLine();
@@ -273,6 +270,8 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
     private BML addTagSelector(BML bml, String currentTag) {
         String tagsString = Joiner.on(",").join(allTags);
         return bml
+                       .text("Use a 'tag' to use the same summoning options for multiple summoners.")
+                       .text("Leave blank to keep the summoning options unique to this summoner.")
                        .harray(b -> b.label("Tag:").entry("tag", currentTag, BeastSummonerMod.maxTagLength))
                        .If(!tagsString.isEmpty(), b -> b
                            .text(" - or - ")
@@ -301,6 +300,7 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
                        .checkbox("customise" ,"Open appearance customiser?", true)
                        .newLine()
                        .harray(b -> b.button("Send"))
+                       .newLine()
                        .build();
     }
 
@@ -312,6 +312,7 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
                             .button("customise", "Appearance").spacer()
                             .button("dismiss", "Dismiss").confirm("Dismiss summoner", "Are you sure you wish to dismiss " + summoner.getName() + "?").spacer()
                             .button("cancel", "Cancel").spacer())
+                       .newLine()
                        .build();
     }
 }

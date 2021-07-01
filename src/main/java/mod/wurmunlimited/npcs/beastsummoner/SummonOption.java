@@ -38,18 +38,19 @@ public class SummonOption {
             logger.warning((amount - actualAmount) + " creatures were not summoned, please report.");
         }
 
-        float posX = (float)((profile.spawnX << 2) + 2);
-        float posY = (float)((profile.spawnY << 2) + 2);
         int layer = summoner.getLayer();
-        int floorLevel = summoner.getFloorLevel();
+        int floorLevel = profile.floorLevel;
 
         long start = System.nanoTime();
         String nameWithGenus = null;
 
         for (int i = 0; i < actualAmount; ++i) {
+            float posX = (float)((profile.spawnX << 2) + 2);
+            float posY = (float)((profile.spawnY << 2) + 2);
+
             if (i > 0) {
-                posX = profile.getNextPos();
-                posY = profile.getNextPos();
+                posX += profile.getNextPos();
+                posY += profile.getNextPos();
             }
 
             boolean surfaced = summoner.isOnSurface();
@@ -64,8 +65,6 @@ public class SummonOption {
                 long structureId;
                 VolaTile tile = Zones.getTileOrNull((int)posX >> 2, (int)posY >> 2, surfaced);
                 if (tile == null) {
-                    // TODO - Work out if null is strange or normal in this situation.
-                    logger.warning("Tile was null for some reason.");
                     structureId = -10;
                 } else {
                     Structure structure = tile.getStructure();

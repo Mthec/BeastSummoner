@@ -6,13 +6,13 @@ import com.wurmonline.server.economy.Change;
 import com.wurmonline.server.items.BeastSummonerTrade;
 import com.wurmonline.server.players.Player;
 import mod.wurmunlimited.bml.BMLBuilder;
+import mod.wurmunlimited.creaturecustomiser.CreatureTypeListCollector;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension {
     enum State {
@@ -150,16 +150,23 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                     }
                     byte age;
                     try {
-                        age = Byte.parseByte(answers.getProperty("age"));
-                        if (age < 0) {
+                        String ageString = answers.getProperty("age");
+                        if (ageString == null) {
+                            throw new NumberFormatException();
+                        } else if (ageString.isEmpty()) {
                             age = 0;
-                            responder.getCommunicator().sendNormalServerMessage("Age must be 0 or greater than 2, so it will be selected randomly.");
-                        } else if (age == 1) {
-                            age = 2;
-                            responder.getCommunicator().sendNormalServerMessage("Age must be 0 or greater than 2, setting minimum but not random.");
-                        } else if (age > 100) {
-                            age = 100;
-                            responder.getCommunicator().sendNormalServerMessage("Age must be 100 or lower, setting maximum.");
+                        } else {
+                            age = Byte.parseByte(ageString);
+                            if (age < 0) {
+                                age = 0;
+                                responder.getCommunicator().sendNormalServerMessage("Age must be 0 or greater than 2, so it will be selected randomly.");
+                            } else if (age == 1) {
+                                age = 2;
+                                responder.getCommunicator().sendNormalServerMessage("Age must be 0 or greater than 2, setting minimum but not random.");
+                            } else if (age > 100) {
+                                age = 100;
+                                responder.getCommunicator().sendNormalServerMessage("Age must be 100 or lower, setting maximum.");
+                            }
                         }
                     } catch (NumberFormatException e) {
                         responder.getCommunicator().sendNormalServerMessage(summoner.getName() + " didn't understand the age, so will select randomly.");
@@ -186,9 +193,15 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
 
     @Override
     public void sendQuestion() {
+        if (profile == null) {
+            logger.warning("Profile was null for " + summoner.getName() + "(" + summoner.getWurmId() + ").");
+            getResponder().getCommunicator().sendAlertServerMessage("Something went wrong in the mists of the void, and the summoner details could not be found.");
+            return;
+        }
+
         AtomicInteger i = new AtomicInteger(0);
         String bml;
-        if (summons.isEmpty()) {
+        if (unusedOptions.isEmpty() && summons.isEmpty()) {
             bml = new BMLBuilder(id)
                 .text("This summoner is not currently able to summon any beasts.")
                 .newLine()
@@ -233,7 +246,9 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
     }
 
     private void sendOptionQuestion(SummonOption option) {
-        List<Map.Entry<Byte, String>> creatureTypes = CreatureTypeList.creatureTypes.stream().filter(it -> option.allowedTypes.contains(it.getKey())).collect(Collectors.toList());
+        String[][][] creatureTypes = CreatureTypeList.creatureTypes.stream()
+                                                              .filter(it -> option.allowedTypes.contains(it.first))
+                                                              .collect(new CreatureTypeListCollector());
         AtomicInteger i = new AtomicInteger(0);
         String bml = new BMLBuilder(id)
                          .text("Details for - " + option.template.getName())
@@ -242,9 +257,23 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                          .harray(b -> b.label("Amount: ").entry("amount", "1", 3).label("Capped at " + option.cap))
                          .harray(b -> b.label("Age (2-100): ").entry("age", "", 3).label("Blank for random."))
                          .label("Creature type:")
-                         .If(creatureTypes.isEmpty(), b -> b.radio("type", "0", "No modifier", true))
-                         .forEach(creatureTypes, (creatureType, b) ->
-                                      b.radio("type", Byte.toString(creatureType.getKey()), creatureType.getValue(), i.getAndIncrement() == 0))
+                         .If(creatureTypes.length == 0 || option.template.hasDen() || option.template.isRiftCreature(),
+                                 b -> b.radio("type", "0", "No modifier", true),
+                                 b -> {
+                                     for (String[][] line : creatureTypes) {
+                                         for (String[] modifier : line) {
+                                             if (modifier != null) {
+                                                 b = b.radio("type", modifier[0], modifier[1], i.getAndIncrement() == 0);
+                                             } else {
+                                                 b.raw(";");
+                                             }
+                                         }
+                                     }
+                                     return b;
+                                 })
+                         .newLine()
+                         .harray(b -> b.button("confirm", "Add"))
+                         .newLine()
                          .build();
 
         getResponder().getCommunicator().sendBml(400, 350, true, true, bml, 200, 200, 200, title);

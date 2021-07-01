@@ -24,6 +24,10 @@ public class BeastSummonerTradingWindow<T> extends BaseTradingWindow<BeastSummon
                 Items.destroyItem(item.getWurmId());
                 return 1;
             }
+        } else if (wurmId == 3) {
+            if (item.isCoin()) {
+                watcher.getInventory().insertItem(item);
+            }
         }
 
         return 0;

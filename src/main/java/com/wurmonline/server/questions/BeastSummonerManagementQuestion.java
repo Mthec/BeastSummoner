@@ -55,12 +55,11 @@ public class BeastSummonerManagementQuestion extends BeastSummonerPlaceOrManageQ
             return;
         }
 
-        BML bml = middleBML(new BMLBuilder(id), getNameWithoutPrefix(summoner.getName()))
-                          .text("Sales:")
+        BML bml = new BMLBuilder(id).text("Sales:")
                           .table(new String[] { "This month", "Total" }, Collections.singletonList(1),
                                   (v, b) -> b.label(String.valueOf(shop.getMoneyEarnedMonth())).label(String.valueOf(shop.getMoneyEarnedLife())))
                           .newLine();
 
-        getResponder().getCommunicator().sendBml(400, 350, true, true, endBML(bml, currentTag, summoner), 200, 200, 200, title);
+        getResponder().getCommunicator().sendBml(400, 350, true, true, endBML(middleBML(bml, getNameWithoutPrefix(summoner.getName())), currentTag, summoner), 200, 200, 200, title);
     }
 }

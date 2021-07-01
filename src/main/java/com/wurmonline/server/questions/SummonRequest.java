@@ -2,6 +2,7 @@ package com.wurmonline.server.questions;
 
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.players.Player;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 
@@ -22,7 +23,7 @@ public class SummonRequest {
             this.type = type;
             this.age = age;
             this.amount = amount;
-            this.price = option.price * amount;
+            this.price = Math.max(1, (int)(option.price * BeastSummonerMod.getTypePriceModifier(type) * amount));
             nameWithoutAmount = getTypeString(type) + age(age) + " " + option.template.getName();
             name = nameWithoutAmount + " x " + amount;
         }

@@ -6,27 +6,30 @@ import com.wurmonline.server.creatures.BeastSummonerTradeHandler;
 import com.wurmonline.server.creatures.Communicator;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.creatures.CreatureTemplate;
+import com.wurmonline.server.items.Item;
 import com.wurmonline.server.players.Player;
 import com.wurmonline.server.questions.CreatureCreationQuestion;
+import com.wurmonline.server.questions.CreatureTypeList;
 import com.wurmonline.server.questions.PlaceBeastSummonerQuestion;
 import com.wurmonline.server.questions.Question;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.server.zones.Zones;
-import mod.wurmunlimited.npcs.DestroyHandler;
-import mod.wurmunlimited.npcs.FaceSetter;
-import mod.wurmunlimited.npcs.ModelSetter;
-import mod.wurmunlimited.npcs.TradeSetup;
+import mod.wurmunlimited.creaturecustomiser.Pair;
+import mod.wurmunlimited.npcs.*;
 import mod.wurmunlimited.npcs.beastsummoner.db.BeastSummonerDatabase;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
 import org.gotti.wurmunlimited.modloader.interfaces.*;
 import org.gotti.wurmunlimited.modsupport.actions.ModActions;
 import org.gotti.wurmunlimited.modsupport.creatures.ModCreatures;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -36,6 +39,7 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
     public static final int maxNameLength = 20;
     private static final String dbName = "beast_summoner.db";
     public static BeastSummonerMod mod;
+    private static final Map<Byte, Float> priceModifiers = new HashMap<>();
     public final BeastSummonerDatabase db = new BeastSummonerDatabase(dbName);
     public FaceSetter faceSetter;
     public ModelSetter modelSetter;
@@ -46,8 +50,30 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
         mod = this;
     }
 
+    public static float getTypePriceModifier(byte type) {
+        return priceModifiers.get(type);
+    }
+
     @Override
     public void configure(Properties properties) {
+        namePrefix = properties.getProperty("name_prefix", namePrefix);
+        for (Pair<Byte, String> type : CreatureTypeList.creatureTypes) {
+            float modifier = 1.0f;
+            String modifierString = (type.second.equals("No modifier") ? "no" : type.second.toLowerCase()) + "_modifier";
+            try {
+                String val = properties.getProperty(modifierString, "1.0");
+                if (!val.equals("1.0")) {
+                    modifier = Float.parseFloat(val);
+                    if (modifier < 0.0001f) {
+                        logger.warning(modifierString + " must be greater than 0.0001.");
+                        modifier = 1.0f;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                logger.warning("Bad value for " + modifierString + ".");
+            }
+            priceModifiers.put(type.first, modifier);
+        }
         namePrefix = properties.getProperty("name_prefix", namePrefix);
     }
 
@@ -70,11 +96,13 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
         FaceSetter.init(manager);
         ModelSetter.init(manager);
         DestroyHandler.addListener(creature -> {
-            try {
-                db.deleteSummoner((Creature)creature);
-            } catch (SQLException e) {
-                logger.warning("Error when deleting Beast Summoner.");
-                e.printStackTrace();
+            if (BeastSummonerTemplate.is((Creature)creature)) {
+                try {
+                    db.deleteSummoner((Creature)creature);
+                } catch (SQLException e) {
+                    logger.warning("Error when deleting Beast Summoner.");
+                    e.printStackTrace();
+                }
             }
         });
         ModCreatures.init();
@@ -95,6 +123,12 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
         ModActions.registerAction(new RequestAction());
         new PlaceBeastSummonerAction();
         PlaceNpcMenu.register();
+        CustomiserPlayerGiveAction.register(BeastSummonerTemplate::is, new CanGive() {
+            @Override
+            public boolean canGive(@NotNull Creature performer, @NotNull Item source, @NotNull Creature target) {
+                return isWearable(source) && performer.getPower() >= 2;
+            }
+        });
     }
 
     Object creatureCreation(Object o, Method method, Object[] args) throws InvocationTargetException, IllegalAccessException, NoSuchFieldException {

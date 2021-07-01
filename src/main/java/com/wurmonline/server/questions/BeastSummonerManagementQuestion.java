@@ -60,6 +60,6 @@ public class BeastSummonerManagementQuestion extends BeastSummonerPlaceOrManageQ
                                   (v, b) -> b.label(String.valueOf(shop.getMoneyEarnedMonth())).label(String.valueOf(shop.getMoneyEarnedLife())))
                           .newLine();
 
-        getResponder().getCommunicator().sendBml(400, 350, true, true, endBML(middleBML(bml, getNameWithoutPrefix(summoner.getName())), currentTag, summoner), 200, 200, 200, title);
+        getResponder().getCommunicator().sendBml(425, 350, true, true, endBML(middleBML(bml, getNameWithoutPrefix(summoner.getName())), currentTag, summoner), 200, 200, 200, title);
     }
 }

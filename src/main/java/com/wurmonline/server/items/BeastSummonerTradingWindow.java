@@ -15,6 +15,16 @@ public class BeastSummonerTradingWindow<T> extends BaseTradingWindow<BeastSummon
     }
 
     @Override
+    public boolean mayMoveItemToWindow(Item item, Creature creature, long window) {
+        boolean toReturn = false;
+        if (this.wurmId == 3L) {
+            return false;
+        }
+
+        return super.mayMoveItemToWindow(item, creature, window);
+    }
+
+    @Override
     protected int handleItemTransfer(Item item) {
         if (wurmId == 4) {
             if (item.isCoin()) {

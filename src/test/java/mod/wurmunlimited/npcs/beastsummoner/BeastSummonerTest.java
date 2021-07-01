@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Properties;
 
 public abstract class BeastSummonerTest {
     private static boolean init = false;
@@ -46,6 +47,7 @@ public abstract class BeastSummonerTest {
         ReflectionUtil.<List<ModelSetter>>getPrivateField(null, ModelSetter.class.getDeclaredField("modelSetters")).clear();
 
         BeastSummonerMod mod = new BeastSummonerMod();
+        mod.configure(new Properties());
         db = BeastSummonerMod.mod.db;
         mod.faceSetter = new FaceSetter(BeastSummonerTemplate::is, "beast_summoner.db");
         mod.modelSetter = new ModelSetter(BeastSummonerTemplate::is, "beast_summoner.db");

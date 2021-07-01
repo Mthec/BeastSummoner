@@ -4,6 +4,7 @@ import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.creatures.CreatureTemplate;
 import com.wurmonline.server.economy.Change;
 import mod.wurmunlimited.bml.BMLBuilder;
+import mod.wurmunlimited.creaturecustomiser.CreatureTypeListCollector;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
@@ -37,7 +38,7 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
         if (options == null) {
             summons = new ArrayList<>();
         } else {
-            summons = options;
+            summons = new ArrayList<>(options);
         }
         state = State.LIST;
     }
@@ -265,7 +266,8 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
         if (allSelected) {
             allowedTypes = Collections.emptySet();
         }
-        final Set<Byte> finalAllowedTypes = allowedTypes;
+        final Set<String> finalAllowedTypes = allowedTypes.stream().map(String::valueOf).collect(Collectors.toSet());
+        String[][][] creatureTypes = CreatureTypeList.creatureTypes.stream().collect(new CreatureTypeListCollector());
 
         String bml = new BMLBuilder(id)
                              .text("Select a creature from the dropdown, then fill in the details as necessary.")
@@ -284,7 +286,19 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                              .newLine()
                              .label("Creature type modifier (if applicable):")
                              .checkbox("tall", "All (overrides below)", allSelected)
-                             .forEach(CreatureTypeList.creatureTypes, (creatureType, b) -> b.checkbox("t" + creatureType.first, creatureType.second, finalAllowedTypes.contains(creatureType.first)))
+                             .If(true, b -> {
+                                 b = b.raw("table{rows=\"" + creatureTypes.length + "\";cols=\"3\";");
+                                 for (String[][] line : creatureTypes) {
+                                     for (String[] modifier : line) {
+                                         if (modifier != null) {
+                                             b = b.checkbox("t" + modifier[0], modifier[1], finalAllowedTypes.contains(modifier[0]));
+                                         } else {
+                                             b.raw(";");
+                                         }
+                                     }
+                                 }
+                                 return b.raw("}");
+                             })
                              .newLine()
                              .harray(b -> b.button("confirm", "Confirm").spacer().button("cancel", "Cancel"))
                              .build();

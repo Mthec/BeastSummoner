@@ -238,7 +238,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                                                         b.label(option.template.getName())
                                                          .label(getPriceString(option.price))
                                                          .label(String.valueOf(option.cap))
-                                                         .label(getTypeString(option.allowedTypes))
+                                                         .label(getTypeString(option))
                                                          .button("a" + i.getAndIncrement(), "Add"))
                              .build();
 
@@ -257,9 +257,10 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                          .harray(b -> b.label("Amount: ").entry("amount", "1", 3).label("Capped at " + option.cap))
                          .harray(b -> b.label("Age (2-100): ").entry("age", "", 3).label("Blank for random."))
                          .label("Creature type:")
-                         .If(creatureTypes.length == 0 || option.template.hasDen() || option.template.isRiftCreature(),
+                         .If(creatureTypes.length == 0 || (!option.template.hasDen() && !option.template.isRiftCreature()),
                                  b -> b.radio("type", "0", "No modifier", true),
                                  b -> {
+                                     b = b.raw("table{rows=\"" + creatureTypes.length + "\";cols=\"3\";");
                                      for (String[][] line : creatureTypes) {
                                          for (String[] modifier : line) {
                                              if (modifier != null) {
@@ -269,28 +270,31 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                                              }
                                          }
                                      }
-                                     return b;
+                                     return b.raw("}");
                                  })
                          .newLine()
-                         .harray(b -> b.button("confirm", "Add"))
+                         .harray(b -> b.button("confirm", "Add").spacer().button("cancel", "Cancel"))
                          .newLine()
                          .build();
 
-        getResponder().getCommunicator().sendBml(400, 350, true, true, bml, 200, 200, 200, title);
+        getResponder().getCommunicator().sendBml(300, 350, true, true, bml, 200, 200, 200, title);
     }
 
     private String getPriceString(int price) {
         return profile.acceptsCoin ? new Change(price).getChangeShortString() : String.valueOf(price);
     }
 
-    private String getTypeString(Set<Byte> types) {
-        int size = types.size();
+    private String getTypeString(SummonOption option) {
+        if (!option.template.hasDen() && !option.template.isRiftCreature()) {
+            return "None";
+        }
+        int size = option.allowedTypes.size();
         if (size == CreatureTypeList.all.size()) {
             return "Any";
         } else if (size > 1) {
             return "Some";
         } else if (size == 1) {
-            return CreatureTypeList.getNameFor(types.iterator().next());
+            return CreatureTypeList.getNameFor(option.allowedTypes.iterator().next());
         } else {
             return "None";
         }

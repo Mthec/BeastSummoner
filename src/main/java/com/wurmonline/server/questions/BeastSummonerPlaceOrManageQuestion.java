@@ -297,7 +297,7 @@ public abstract class BeastSummonerPlaceOrManageQuestion extends BeastSummonerQu
                        .radio("gender", "male", "Male", gender)
                        .radio("gender", "female", "Female", !gender)
                        .newLine()
-                       .checkbox("customise" ,"Open appearance customiser?", true)
+                       .checkbox("customise" ,"Open appearance customiser when done?", true)
                        .newLine()
                        .harray(b -> b.button("Send"))
                        .newLine()

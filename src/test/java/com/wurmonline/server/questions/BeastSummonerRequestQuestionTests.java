@@ -1,10 +1,12 @@
 package com.wurmonline.server.questions;
 
 import com.wurmonline.server.creatures.*;
+import com.wurmonline.server.economy.Change;
 import com.wurmonline.server.economy.Economy;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.items.Trade;
 import mod.wurmunlimited.creaturecustomiser.Pair;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 import org.junit.jupiter.api.Test;
@@ -333,8 +335,8 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
     }
 
     @Test
-    void testTypeColumnNone() throws SQLException {
-        db.addOption(summoner, getRandomTemplate(), 1, 2, Collections.emptySet());
+    void testTypeColumnNone() throws SQLException, NoSuchCreatureTemplateException {
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.GOBLIN_CID), 1, 2, Collections.emptySet());
 
         question = new BeastSummonerRequestQuestion(player, summoner);
         add();
@@ -343,8 +345,8 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
     }
 
     @Test
-    void testTypeColumnOne() throws SQLException {
-        db.addOption(summoner, getRandomTemplate(), 1, 2, Collections.singleton((byte)5));
+    void testTypeColumnOne() throws SQLException, NoSuchCreatureTemplateException {
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.GOBLIN_CID), 1, 2, Collections.singleton((byte)5));
 
         question = new BeastSummonerRequestQuestion(player, summoner);
         add();
@@ -353,10 +355,10 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
     }
 
     @Test
-    void testTypeColumnNotAll() throws SQLException {
+    void testTypeColumnNotAll() throws SQLException, NoSuchCreatureTemplateException {
         Set<Byte> types = new HashSet<>(CreatureTypeList.all);
         types.remove((byte)5);
-        db.addOption(summoner, getRandomTemplate(), 1, 2, types);
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.GOBLIN_CID), 1, 2, types);
 
         question = new BeastSummonerRequestQuestion(player, summoner);
         add();
@@ -365,8 +367,8 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
     }
 
     @Test
-    void testTypeColumnAll() throws SQLException {
-        db.addOption(summoner, getRandomTemplate(), 1, 2, new HashSet<>(CreatureTypeList.all));
+    void testTypeColumnAll() throws SQLException, NoSuchCreatureTemplateException {
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.GOBLIN_CID), 1, 2, new HashSet<>(CreatureTypeList.all));
 
         question = new BeastSummonerRequestQuestion(player, summoner);
         add();
@@ -375,36 +377,36 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
     }
 
     @Test
-    void testCorrectTypesAvailableNone() throws SQLException {
-        db.addOption(summoner, getRandomTemplate(), 1, 2, Collections.emptySet());
+    void testCorrectTypesAvailableNone() throws SQLException, NoSuchCreatureTemplateException {
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.GOBLIN_CID), 1, 2, Collections.emptySet());
         SummonOption option = Objects.requireNonNull(db.getOptionsFor(summoner)).get(0);
 
         question = new BeastSummonerRequestQuestion(player, summoner);
         add();
         selectFirstOption();
 
-        Pattern pattern = Pattern.compile("radio\\{group=\"type\";id=\"0\";text=\"No modifier\";selected=\"true\"}}};null;null;}$");
+        Pattern pattern = Pattern.compile("radio\\{group=\"type\";id=\"0\";text=\"No modifier\";selected=\"true\"}text\\{text=\"\"}");
         assertTrue(pattern.matcher(factory.getCommunicator(player).lastBmlContent).find(),
                 pattern + " / " + factory.getCommunicator(player).lastBmlContent);
     }
 
     @Test
-    void testCorrectTypesAvailableOneNotNone() throws SQLException {
-        db.addOption(summoner, getRandomTemplate(), 1, 2, Collections.singleton((byte)5));
+    void testCorrectTypesAvailableOneNotNone() throws SQLException, NoSuchCreatureTemplateException {
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.GOBLIN_CID), 1, 2, Collections.singleton((byte)5));
         SummonOption option = Objects.requireNonNull(db.getOptionsFor(summoner)).get(0);
 
         question = new BeastSummonerRequestQuestion(player, summoner);
         add();
         selectFirstOption();
 
-        Pattern pattern = Pattern.compile("radio\\{group=\"type\";id=\"5\";text=\"Alert\";selected=\"true\"}}};null;null;}$");
+        Pattern pattern = Pattern.compile("radio\\{group=\"type\";id=\"5\";text=\"Alert\";selected=\"true\"}}text\\{text=\"\"}");
         assertTrue(pattern.matcher(factory.getCommunicator(player).lastBmlContent).find(),
                 pattern + " / " + factory.getCommunicator(player).lastBmlContent);
     }
 
     @Test
-    void testCorrectTypesAvailableAll() throws SQLException {
-        db.addOption(summoner, getRandomTemplate(), 1, 2, new HashSet<>(CreatureTypeList.all));
+    void testCorrectTypesAvailableAll() throws SQLException, NoSuchCreatureTemplateException {
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.GOBLIN_CID), 1, 2, new HashSet<>(CreatureTypeList.all));
         SummonOption option = Objects.requireNonNull(db.getOptionsFor(summoner)).get(0);
 
         question = new BeastSummonerRequestQuestion(player, summoner);
@@ -417,9 +419,19 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
                                 (entry.first == 0 ? ";selected=\"true\"" : "") +
                                 "}");
         }
-        Pattern pattern = Pattern.compile(String.join("", entries) + "}};null;null;}$");
+        Pattern pattern = Pattern.compile(String.join("", entries) + "}text\\{text=\"\"}");
         assertTrue(pattern.matcher(factory.getCommunicator(player).lastBmlContent).find(),
                 pattern + " / " + factory.getCommunicator(player).lastBmlContent);
+    }
+
+    @Test
+    void testTypeColumnOneNotHasDen() throws SQLException, NoSuchCreatureTemplateException {
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.ANACONDA_CID), 1, 2, Collections.singleton((byte)5));
+
+        question = new BeastSummonerRequestQuestion(player, summoner);
+        add();
+
+        assertThat(player, receivedBMLContaining("label{text=\"2\"};label{text=\"None\"}"));
     }
 
     @Test
@@ -814,5 +826,57 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
             }
         }
         assertEquals(amount, count);
+    }
+
+    @Test
+    void testPriceModifier() throws NoSuchFieldException, IllegalAccessException, SQLException {
+        int price = 5;
+        float modifier = 10f;
+        Properties properties = new Properties();
+        properties.setProperty("champion_modifier", String.valueOf(modifier));
+        BeastSummonerMod.mod.configure(properties);
+        db.addOption(summoner, getRandomTemplate(), price, 1, Collections.singleton((byte)99));
+
+        question = new BeastSummonerRequestQuestion(player, summoner);
+        add();
+        selectFirstOption();
+        factory.getCommunicator(player).clearBml();
+        setOptionDetails(1, (byte)0, (byte)99);
+
+        assertThat(player, receivedBMLContaining("Current total - " + new Change((long)(price * modifier)).getChangeShortString()));
+    }
+
+    @Test
+    void testNoPriceModifier() throws SQLException {
+        int price = 5;
+        Properties properties = new Properties();
+        BeastSummonerMod.mod.configure(properties);
+        db.addOption(summoner, getRandomTemplate(), price, 1, Collections.singleton((byte)99));
+
+        question = new BeastSummonerRequestQuestion(player, summoner);
+        add();
+        selectFirstOption();
+        factory.getCommunicator(player).clearBml();
+        setOptionDetails(1, (byte)0, (byte)99);
+
+        assertThat(player, receivedBMLContaining("Current total - " + new Change(price).getChangeShortString()));
+    }
+
+    @Test
+    void testNoPriceSmallModifier() throws SQLException {
+        int price = 5;
+        float modifier = 0.2f;
+        Properties properties = new Properties();
+        properties.setProperty("champion_modifier", String.valueOf(modifier));
+        BeastSummonerMod.mod.configure(properties);
+        db.addOption(summoner, getRandomTemplate(), price, 1, Collections.singleton((byte)99));
+
+        question = new BeastSummonerRequestQuestion(player, summoner);
+        add();
+        selectFirstOption();
+        factory.getCommunicator(player).clearBml();
+        setOptionDetails(1, (byte)0, (byte)99);
+
+        assertThat(player, receivedBMLContaining("Current total - " + new Change((long)(price * modifier)).getChangeShortString()));
     }
 }

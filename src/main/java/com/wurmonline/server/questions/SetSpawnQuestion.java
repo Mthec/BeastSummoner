@@ -165,6 +165,7 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
                                            tile.getTileX() + ", " + tile.getTileY() + ".")
                              .harray(b -> b.label("Range: ").entry("range", Integer.toString(range), 3))
                              .text("How far in tiles the summoner will spawn beasts from this point.")
+                             .text("The first beast will always spawn in the centre.")
                              .newLine()
                              .harray(b -> b.button("confirm", "Send").spacer().button("survey", "Survey Area").spacer().button("cancel", "Cancel"))
                              .build();

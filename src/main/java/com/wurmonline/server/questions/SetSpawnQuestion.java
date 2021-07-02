@@ -4,6 +4,8 @@ import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.items.ItemFactory;
 import com.wurmonline.server.items.ItemList;
+import com.wurmonline.server.structures.BridgePart;
+import com.wurmonline.server.structures.Floor;
 import com.wurmonline.server.zones.NoSuchZoneException;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.server.zones.Zone;
@@ -76,8 +78,23 @@ public class SetSpawnQuestion extends BeastSummonerQuestionExtension {
 
                 try {
                     final Item item = ItemFactory.createItem(ItemList.perimeterMarker, 80.0f, this.getResponder().getName());
-                    item.setPosXYZ((float)((x << 2) + 2), (float)((y << 2) + 2), Zones.calculateHeight((float)((x << 2) + 2), (float)((y << 2) + 2), tile.isOnSurface()) + 5.0f);
-                    // TODO - What about floor?
+
+                    VolaTile maybeTile = Zones.getTileOrNull(x, y, tile.isOnSurface());
+                    float posX = (float)((x << 2) + 2);
+                    float posY = (float)((y << 2) + 2);
+                    float posZ = Zones.calculateHeight(posX, posY, tile.isOnSurface());
+                    if (maybeTile != null) {
+                        BridgePart[] parts = maybeTile.getBridgeParts();
+                        if (parts != null && parts.length > 0) {
+                            item.setOnBridge(parts[0].getId());
+                        }
+
+                        final int dfl = maybeTile.getDropFloorLevel(floorLevel);
+                        final Floor[] f = maybeTile.getFloors(dfl * 30, dfl * 30);
+                        posZ += Math.max(0, dfl * 3) + ((f.length > 0) ? 0.25f : 0.0f);
+                    }
+
+                    item.setPos(posX, posY, posZ, 0f, item.onBridge);
                     Zones.getZone(x, y, tile.isOnSurface()).addItem(item);
                 } catch (Exception e) {
                     e.printStackTrace();

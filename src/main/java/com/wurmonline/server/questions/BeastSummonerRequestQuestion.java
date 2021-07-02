@@ -157,15 +157,16 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                             age = 0;
                         } else {
                             age = Byte.parseByte(ageString);
+                            int maxAge = waitingForDetails.template.getMaxAge();
                             if (age < 0) {
                                 age = 0;
                                 responder.getCommunicator().sendNormalServerMessage("Age must be 0 or greater than 2, so it will be selected randomly.");
                             } else if (age == 1) {
                                 age = 2;
                                 responder.getCommunicator().sendNormalServerMessage("Age must be 0 or greater than 2, setting minimum but not random.");
-                            } else if (age > 100) {
-                                age = 100;
-                                responder.getCommunicator().sendNormalServerMessage("Age must be 100 or lower, setting maximum.");
+                            } else if (age > maxAge) {
+                                age = (byte)maxAge;
+                                responder.getCommunicator().sendNormalServerMessage("Age for this beast must be " + maxAge + " or lower, setting maximum.");
                             }
                         }
                     } catch (NumberFormatException e) {
@@ -255,7 +256,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                          .text("Price per beast - " + getPriceString(option.price))
                          .newLine()
                          .harray(b -> b.label("Amount: ").entry("amount", "1", 3).label("Capped at " + option.cap))
-                         .harray(b -> b.label("Age (2-100): ").entry("age", "", 3).label("Blank for random."))
+                         .harray(b -> b.label("Age (2-" + option.template.getMaxAge() + "): ").entry("age", "", 3).label("Blank for random."))
                          .label("Creature type:")
                          .If(creatureTypes.length == 0 || (!option.template.hasDen() && !option.template.isRiftCreature()),
                                  b -> b.radio("type", "0", "No modifier", true),

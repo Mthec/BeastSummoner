@@ -2,10 +2,7 @@ package mod.wurmunlimited.npcs.beastsummoner;
 
 import com.wurmonline.server.TimeConstants;
 import com.wurmonline.server.behaviours.*;
-import com.wurmonline.server.creatures.BeastSummonerTradeHandler;
-import com.wurmonline.server.creatures.Communicator;
-import com.wurmonline.server.creatures.Creature;
-import com.wurmonline.server.creatures.CreatureTemplate;
+import com.wurmonline.server.creatures.*;
 import com.wurmonline.server.items.Item;
 import com.wurmonline.server.players.Player;
 import com.wurmonline.server.questions.CreatureCreationQuestion;
@@ -111,6 +108,11 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
 
     @Override
     public void onServerStarted() {
+        try {
+            CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.SKELETON_CID).setMaxAge(100);
+        } catch (NoSuchCreatureTemplateException e) {
+            e.printStackTrace();
+        }
         db.loadData();
         TradeSetup.addTrader(BeastSummonerTemplate::is, BeastSummonerTradeHandler::create);
         faceSetter = new FaceSetter(BeastSummonerTemplate::is, dbName);

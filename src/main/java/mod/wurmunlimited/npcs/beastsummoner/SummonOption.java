@@ -3,6 +3,7 @@ package mod.wurmunlimited.npcs.beastsummoner;
 import com.wurmonline.server.Server;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.creatures.CreatureTemplate;
+import com.wurmonline.server.creatures.CreatureTemplateIds;
 import com.wurmonline.server.players.Player;
 import com.wurmonline.server.structures.NoSuchStructureException;
 import com.wurmonline.server.structures.Structure;
@@ -92,19 +93,10 @@ public class SummonOption {
 
                 Creature newCreature;
                 // !zombie
-                if (template.getTemplateId() != 69) {
+                if (template.getTemplateId() != CreatureTemplateIds.ZOMBIE_CID) {
                     byte actualAge = age;
-                    // Not sure why.
-                    actualAge -= 1;
-                    if (actualAge < 2) {
-                        actualAge = (byte)(Server.rand.nextFloat() * 5.0F);
-                    }
-
-                    if (template.getTemplateId() != 65 && template.getTemplateId() != 48 && template.getTemplateId() != 98 && template.getTemplateId() != 101 && template.getTemplateId() != 50 && template.getTemplateId() != 117 && template.getTemplateId() != 118) {
-                        if (actualAge < 2) {
-                            actualAge = (byte)(Server.rand.nextFloat() * (float)Math.min(48, template.getMaxAge()));
-                        }
-
+                    if (actualAge == 0) {
+                        actualAge = (byte)(Server.rand.nextFloat() * template.getMaxAge());
                     }
                     newCreature = Creature.doNew(template.getTemplateId(), true, posX, posY, rot, layer, "", sex, kingdom, creType, false, actualAge, floorLevel);
                 } else {

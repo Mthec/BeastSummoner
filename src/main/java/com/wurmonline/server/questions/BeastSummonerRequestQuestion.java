@@ -250,13 +250,14 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
         String[][][] creatureTypes = CreatureTypeList.creatureTypes.stream()
                                                               .filter(it -> option.allowedTypes.contains(it.first))
                                                               .collect(new CreatureTypeListCollector());
+        int maxAge = option.template.getMaxAge();
         AtomicInteger i = new AtomicInteger(0);
         String bml = new BMLBuilder(id)
                          .text("Details for - " + option.template.getName())
                          .text("Price per beast - " + getPriceString(option.price))
                          .newLine()
                          .harray(b -> b.label("Amount: ").entry("amount", "1", 3).label("Capped at " + option.cap))
-                         .harray(b -> b.label("Age (2-" + option.template.getMaxAge() + "): ").entry("age", "", 3).label("Blank for random."))
+                         .harray(b -> b.label("Age (" + (maxAge == 2 ? "2" : "2-" + maxAge) + "): ").entry("age", "", 3).label("Blank for random."))
                          .label("Creature type:")
                          .If(creatureTypes.length == 0 || (!option.template.hasDen() && !option.template.isRiftCreature()),
                                  b -> b.radio("type", "0", "No modifier", true),

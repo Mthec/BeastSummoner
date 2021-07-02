@@ -4,7 +4,7 @@ import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.creatures.CreatureTemplate;
 import com.wurmonline.server.economy.Change;
 import mod.wurmunlimited.bml.BMLBuilder;
-import mod.wurmunlimited.creaturecustomiser.CreatureTypeListCollector;
+import mod.wurmunlimited.creatures.CreatureTypeListCollector;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
@@ -181,8 +181,8 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                 if (template != null) {
                     int price = getPositiveIntegerOrDefault("price", -1);
                     if (price == -1) {
-                        getResponder().getCommunicator().sendNormalServerMessage("Price must be 1 or greater, setting 1.");
-                        price = 1;
+                        getResponder().getCommunicator().sendNormalServerMessage("Price must be " + BeastSummonerMod.minimumPrice + " or greater, setting minimum.");
+                        price = BeastSummonerMod.minimumPrice;
                     }
 
                     int cap = getPositiveIntegerOrDefault("cap", -1);

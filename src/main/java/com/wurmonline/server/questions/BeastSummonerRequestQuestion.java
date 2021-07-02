@@ -6,7 +6,7 @@ import com.wurmonline.server.economy.Change;
 import com.wurmonline.server.items.BeastSummonerTrade;
 import com.wurmonline.server.players.Player;
 import mod.wurmunlimited.bml.BMLBuilder;
-import mod.wurmunlimited.creaturecustomiser.CreatureTypeListCollector;
+import mod.wurmunlimited.creatures.CreatureTypeListCollector;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;

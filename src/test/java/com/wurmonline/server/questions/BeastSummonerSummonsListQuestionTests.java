@@ -4,6 +4,7 @@ import com.wurmonline.server.creatures.CreatureTemplate;
 import com.wurmonline.server.creatures.CreatureTemplateFactory;
 import com.wurmonline.server.creatures.CreatureTemplateIds;
 import com.wurmonline.server.creatures.NoSuchCreatureTemplateException;
+import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.db.BeastSummonerDatabase;
 import org.junit.jupiter.api.Test;
@@ -337,9 +338,11 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
     }
 
     @Test
-    void testPriceMustBeGreaterThanZero() throws SQLException {
+    void testPriceMustBeGreaterThanMinimum() throws SQLException {
         int n = 5;
         int cap = 34;
+        int minimum = 100;
+        BeastSummonerMod.minimumPrice = minimum;
         CreatureTemplate template1 = getRandomTemplate();
         db.addOption(summoner, template1, n, n + 1, Collections.emptySet());
         db.addOption(summoner, getRandomTemplate(), n + 1, n + 2, Collections.emptySet());
@@ -362,8 +365,9 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         List<SummonOption> newOptions = db.getOptionsFor(summoner);
         assertEquals(3, Objects.requireNonNull(newOptions).size());
         SummonOption option = newOptions.get(2);
-        assertEquals(1, option.price);
+        assertEquals(minimum, option.price);
         assertEquals(cap, option.cap);
+        assertThat(gm, receivedMessageContaining("Price must be " + minimum + " or greater"));
     }
 
     @Test

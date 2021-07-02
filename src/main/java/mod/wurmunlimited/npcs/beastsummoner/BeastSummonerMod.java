@@ -10,7 +10,7 @@ import com.wurmonline.server.questions.PlaceBeastSummonerQuestion;
 import com.wurmonline.server.questions.Question;
 import com.wurmonline.server.zones.VolaTile;
 import com.wurmonline.server.zones.Zones;
-import mod.wurmunlimited.creaturecustomiser.Pair;
+import mod.wurmunlimited.creatures.Pair;
 import mod.wurmunlimited.npcs.*;
 import mod.wurmunlimited.npcs.beastsummoner.db.BeastSummonerDatabase;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
@@ -39,6 +39,7 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
     public FaceSetter faceSetter;
     public ModelSetter modelSetter;
     public static String namePrefix = "Beast_Summoner";
+    public static int minimumPrice = 0;
     private final CommandWaitTimer dumpLoadTagsTimer = new CommandWaitTimer(TimeConstants.MINUTE_MILLIS / 2);
 
     public BeastSummonerMod() {
@@ -52,6 +53,17 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
     @Override
     public void configure(Properties properties) {
         namePrefix = properties.getProperty("name_prefix", namePrefix);
+        String min = properties.getProperty("minimum_price", String.valueOf(minimumPrice));
+        try {
+            minimumPrice = Integer.parseInt(min);
+            if (minimumPrice < 0) {
+                logger.warning("minimum_price cannot be negative, setting 0.");
+                minimumPrice = 0;
+            }
+        } catch (NumberFormatException e) {
+            logger.warning("Invalid value for minimum_price, setting 0.");
+            minimumPrice = 0;
+        }
         for (Pair<Byte, String> type : CreatureTypeList.creatureTypes) {
             float modifier = 1.0f;
             String modifierString = (type.second.equals("No modifier") ? "no" : type.second.toLowerCase()) + "_modifier";

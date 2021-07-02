@@ -3,7 +3,6 @@ package mod.wurmunlimited.npcs.beastsummoner;
 import com.wurmonline.server.TimeConstants;
 import com.wurmonline.server.behaviours.*;
 import com.wurmonline.server.creatures.*;
-import com.wurmonline.server.items.Item;
 import com.wurmonline.server.players.Player;
 import com.wurmonline.server.questions.CreatureCreationQuestion;
 import com.wurmonline.server.questions.CreatureTypeList;
@@ -19,7 +18,6 @@ import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
 import org.gotti.wurmunlimited.modloader.interfaces.*;
 import org.gotti.wurmunlimited.modsupport.actions.ModActions;
 import org.gotti.wurmunlimited.modsupport.creatures.ModCreatures;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -125,12 +123,9 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
         ModActions.registerAction(new RequestAction());
         new PlaceBeastSummonerAction();
         PlaceNpcMenu.register();
-        CustomiserPlayerGiveAction.register(BeastSummonerTemplate::is, new CanGive() {
-            @Override
-            public boolean canGive(@NotNull Creature performer, @NotNull Item source, @NotNull Creature target) {
-                return isWearable(source) && performer.getPower() >= 2;
-            }
-        });
+        CanGiveRemoveGMAndWearable can = new CanGiveRemoveGMAndWearable();
+        CustomiserPlayerGiveAction.register(BeastSummonerTemplate::is, can);
+        CustomiserPlayerRemoveAction.register(BeastSummonerTemplate::is, can);
     }
 
     Object creatureCreation(Object o, Method method, Object[] args) throws InvocationTargetException, IllegalAccessException, NoSuchFieldException {

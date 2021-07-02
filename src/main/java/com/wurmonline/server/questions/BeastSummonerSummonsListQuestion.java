@@ -96,35 +96,37 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                     return;
                 }
 
-                for (int i = 0; i < summons.size(); i++) {
-                    String property = answers.getProperty("r" + i);
-                    if (property != null && property.equals("true")) {
-                        try {
-                            SummonOption option = summons.remove(i);
-                            if (option != null) {
-                                if (tag.isEmpty()) {
-                                    BeastSummonerMod.mod.db.deleteOption(summoner, option);
-                                } else {
-                                    BeastSummonerMod.mod.db.deleteOption(tag, option);
+                if (wasSelected("remove")) {
+                    for (int i = 0; i < summons.size(); i++) {
+                        String val = answers.getProperty("r" + i);
+                        if (val != null && val.equals("true")) {
+                            try {
+                                SummonOption option = summons.remove(i);
+                                if (option != null) {
+                                    if (tag.isEmpty()) {
+                                        BeastSummonerMod.mod.db.deleteOption(summoner, option);
+                                    } else {
+                                        BeastSummonerMod.mod.db.deleteOption(tag, option);
+                                    }
                                 }
+                            } catch (IndexOutOfBoundsException e) {
+                                logger.warning("Attempted to remove summon option outside of range " + i + " - " + summons.size());
+                                getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not removed.");
+                                break;
                             }
-                        } catch (IndexOutOfBoundsException e) {
-                            logger.warning("Attempted to remove summon option outside of range " + i + " - " + summons.size());
-                            getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not removed.");
                         }
-                        break;
                     }
-
-                    property = answers.getProperty("e" + i);
-                    if (property != null && property.equals("true")) {
-                        try {
-                            editOption = summons.get(i);
-                            new BeastSummonerSummonsListQuestion(this, State.EDIT);
-                        } catch (IndexOutOfBoundsException e) {
-                            logger.warning("Attempted to edit summon option outside of range " + i + " - " + summons.size());
-                            getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not found.");
-                        }
+                } else if (wasSelected("edit")) {
+                    try {
+                        int editIndex = Integer.parseInt(answers.getProperty("e", "0"));
+                        editOption = summons.get(editIndex);
+                        new BeastSummonerSummonsListQuestion(this, State.EDIT);
                         return;
+                    } catch (NumberFormatException e) {
+                        getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not found.");
+                    } catch (IndexOutOfBoundsException e) {
+                        logger.warning("Attempted to edit summon option outside of range " + answers.getProperty("e", "none") + " - " + summons.size());
+                        getResponder().getCommunicator().sendNormalServerMessage("Something went wrong and the summon option was not found.");
                     }
                 }
 
@@ -251,11 +253,11 @@ public class BeastSummonerSummonsListQuestion extends BeastSummonerQuestionExten
                                                           .label(option.template.getName())
                                                           .label(getPriceString(profile, option.price))
                                                           .label(String.valueOf(option.cap))
-                                                          .button("e" + i.getAndIncrement(), "?")
-                                                          .button("r" + (i.get() - 1), "x"))
+                                                          .radio("e", String.valueOf(i.get()), "", i.get() == 0)
+                                                          .checkbox("r" + i.getAndIncrement()))
                              .button("add", "Add New")
                              .newLine()
-                             .harray(b -> b.button("confirm", "Send"))
+                             .harray(b -> b.button("confirm", "Done").spacer().button("edit", "Edit Selected").spacer().button("remove", "Remove Selected"))
                              .build();
 
         getResponder().getCommunicator().sendBml(350, 400, true, true, bml, 200, 200, 200, title);

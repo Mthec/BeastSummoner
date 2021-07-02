@@ -106,6 +106,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         assert oldOptions.size() == 2;
 
         Properties properties = new Properties();
+        properties.setProperty("remove", "true");
         properties.setProperty("r0", "true");
         new BeastSummonerSummonsListQuestion(gm, summoner).answer(properties);
 
@@ -123,6 +124,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         assert oldOptions.size() == 2;
 
         Properties properties = new Properties();
+        properties.setProperty("edit", "true");
         properties.setProperty("e0", "true");
         question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.sendQuestion();
@@ -213,6 +215,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         assert oldOptions.size() == 2;
 
         Properties properties = new Properties();
+        properties.setProperty("edit", "true");
         properties.setProperty("e0", "true");
         question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
@@ -274,6 +277,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         int templateIndex = new CreatureTemplatesDropdown(Collections.singletonList(template2)).getIndexOf(template1);
 
         Properties properties = new Properties();
+        properties.setProperty("edit", "true");
         properties.setProperty("e0", "true");
         question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);
@@ -311,6 +315,7 @@ public class BeastSummonerSummonsListQuestionTests extends BeastSummonerListTest
         }
 
         Properties properties = new Properties();
+        properties.setProperty("edit", "true");
         properties.setProperty("e0", "true");
         question = new BeastSummonerSummonsListQuestion(gm, summoner);
         question.answer(properties);

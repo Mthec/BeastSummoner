@@ -4,6 +4,7 @@ import com.wurmonline.server.Server;
 import com.wurmonline.server.creatures.Creature;
 import com.wurmonline.server.creatures.CreatureTemplate;
 import com.wurmonline.server.creatures.CreatureTemplateIds;
+import com.wurmonline.server.creatures.DbCreatureStatus;
 import com.wurmonline.server.players.Player;
 import com.wurmonline.server.structures.NoSuchStructureException;
 import com.wurmonline.server.structures.Structure;
@@ -33,7 +34,7 @@ public class SummonOption {
         this.allowedTypes = allowedTypes;
     }
 
-    public void summon(Creature summoner, Player requester, SummonerProfile profile, byte creatureType, int amount, byte age) {
+    public void summon(Creature summoner, Player requester, SummonerProfile profile, byte creatureType, int amount, int age) {
         int actualAmount = Math.min(amount, cap);
         if (actualAmount < amount) {
             logger.warning((amount - actualAmount) + " creatures were not summoned, please report.");
@@ -94,14 +95,13 @@ public class SummonOption {
                 Creature newCreature;
                 // !zombie
                 if (template.getTemplateId() != CreatureTemplateIds.ZOMBIE_CID) {
-                    byte actualAge = age;
-                    if (actualAge == 0) {
-                        actualAge = (byte)(Server.rand.nextFloat() * template.getMaxAge());
-                    }
-                    newCreature = Creature.doNew(template.getTemplateId(), true, posX, posY, rot, layer, "", sex, kingdom, creType, false, actualAge, floorLevel);
+                    newCreature = Creature.doNew(template.getTemplateId(), true, posX, posY, rot, layer, "", sex, kingdom, creType, false, (byte)Math.min(Byte.MAX_VALUE, age), floorLevel);
                 } else {
                     newCreature = Creature.doNew(template.getTemplateId(), false, posX, posY, rot, layer, "", sex, kingdom, creType, true, (byte)0, floorLevel);
                 }
+
+                // To prevent deaths on summoning.
+                ((DbCreatureStatus)newCreature.getStatus()).updateAge(age);
 
                 if (nameWithGenus == null) {
                     if (amount == 1) {

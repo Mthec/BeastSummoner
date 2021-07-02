@@ -11,7 +11,10 @@ import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension {
@@ -97,14 +100,13 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                         handler.createTradeItem(profile, details.name, details.price);
                     }
                     handler.addItemsToTrade();
-                } else {
+                } else if (wasSelected("remove")) {
                     for (int i = 0; i < summons.size(); i++) {
                         String property = answers.getProperty("r" + i);
                         if (property != null && property.equals("true")) {
                             SummonRequest.SummonRequestDetails details = summons.remove(i);
                             unusedOptions.add(details.option);
                             unusedOptions.sort(Comparator.comparing(it -> it.template.getName()));
-                            break;
                         }
                     }
                     new BeastSummonerRequestQuestion(this, State.LIST);
@@ -112,21 +114,17 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                 break;
             case ADD:
                 if (!wasSelected("back")) {
-                    for (Map.Entry<Object, Object> entry : answers.entrySet()) {
-                        String val = (String)entry.getKey();
-                        if (val != null && val.startsWith("a") && entry.getValue().equals("true")) {
-                            try {
-                                int option = Integer.parseInt(val.substring(1));
-                                if (option >= 0 && option < unusedOptions.size()) {
-                                    waitingForDetails = unusedOptions.get(option);
-                                    new BeastSummonerRequestQuestion(this, State.DETAILS);
-                                    return;
-                                }
-                                throw new NumberFormatException();
-                            } catch (NumberFormatException e) {
-                                responder.getCommunicator().sendSafeServerMessage(summoner.getName() + " says 'I do not understand what you want me to summon.'");
-                            }
+                    String val = answers.getProperty("a", "0");
+                    try {
+                        int option = Integer.parseInt(val);
+                        if (option >= 0 && option < unusedOptions.size()) {
+                            waitingForDetails = unusedOptions.get(option);
+                            new BeastSummonerRequestQuestion(this, State.DETAILS);
+                            return;
                         }
+                        throw new NumberFormatException();
+                    } catch (NumberFormatException e) {
+                        responder.getCommunicator().sendSafeServerMessage(summoner.getName() + " says 'I do not understand what you want me to summon.'");
                     }
                 }
 
@@ -148,7 +146,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                         amount = 1;
                         responder.getCommunicator().sendNormalServerMessage("Amount must be 1 or greater, setting 1.");
                     }
-                    byte age;
+                    int age;
                     try {
                         String ageString = answers.getProperty("age");
                         if (ageString == null) {
@@ -156,7 +154,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                         } else if (ageString.isEmpty()) {
                             age = 0;
                         } else {
-                            age = Byte.parseByte(ageString);
+                            age = Integer.parseInt(ageString);
                             int maxAge = waitingForDetails.template.getMaxAge();
                             if (age < 0) {
                                 age = 0;
@@ -165,7 +163,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                                 age = 2;
                                 responder.getCommunicator().sendNormalServerMessage("Age must be 0 or greater than 2, setting minimum but not random.");
                             } else if (age > maxAge) {
-                                age = (byte)maxAge;
+                                age = maxAge;
                                 responder.getCommunicator().sendNormalServerMessage("Age for this beast must be " + maxAge + " or lower, setting maximum.");
                             }
                         }
@@ -219,8 +217,9 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                                                                        .label(details.nameWithoutAmount)
                                                                        .label(String.valueOf(details.amount))
                                                                        .label(getPriceString(details.price))
-                                                                       .button("r" + i.getAndIncrement(), "x"))
+                                                                       .checkbox("r" + i.getAndIncrement()))
                 .button("add", "Add")
+                .If(!summons.isEmpty(), b -> b.button("remove", "Remove selected"))
                 .label("Current total - " + getPriceString(summons.stream().mapToInt(it -> it.price).sum()))
                 .newLine()
                 .harray(b -> b.button("confirm", "Send").spacer().button("cancel", "Cancel"))
@@ -234,13 +233,13 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
         AtomicInteger i = new AtomicInteger(0);
         String bml = new BMLBuilder(id)
                              .text("Select which beast you would like to summon.")
-                             .harray(b -> b.button("back", "Back"))
+                             .harray(b -> b.button("add", "Add").spacer().button("back", "Back"))
                              .table(new String[] { "Name", "Price", "Cap", "Type?", "Add" }, unusedOptions, (option, b) ->
                                                         b.label(option.template.getName())
                                                          .label(getPriceString(option.price))
                                                          .label(String.valueOf(option.cap))
                                                          .label(getTypeString(option))
-                                                         .button("a" + i.getAndIncrement(), "Add"))
+                                                         .radio("a", String.valueOf(i.getAndIncrement()), "", i.get() == 1))
                              .build();
 
         getResponder().getCommunicator().sendBml(350, 400, true, true, bml, 200, 200, 200, title);
@@ -258,6 +257,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                          .newLine()
                          .harray(b -> b.label("Amount: ").entry("amount", "1", 3).label("Capped at " + option.cap))
                          .harray(b -> b.label("Age (" + (maxAge == 2 ? "2" : "2-" + maxAge) + "): ").entry("age", "", 3).label("Blank for random."))
+                         .text("Be aware, the older the beast the greater the chance they will die of old age before you can defeat them!").italic()
                          .label("Creature type:")
                          .If(creatureTypes.length == 0 || (!option.template.hasDen() && !option.template.isRiftCreature()),
                                  b -> b.radio("type", "0", "No modifier", true),

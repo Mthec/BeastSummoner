@@ -12,13 +12,13 @@ public class SummonRequest {
     public static class SummonRequestDetails {
         final SummonOption option;
         final byte type;
-        final byte age;
+        final int age;
         final int amount;
         public final int price;
         public final String nameWithoutAmount;
         public final String name;
 
-        SummonRequestDetails(SummonOption option, byte type, byte age, int amount) {
+        SummonRequestDetails(SummonOption option, byte type, int age, int amount) {
             this.option = option;
             this.type = type;
             this.age = age;
@@ -28,7 +28,7 @@ public class SummonRequest {
             name = nameWithoutAmount + " x " + amount;
         }
 
-        private String age(byte age) {
+        private String age(int age) {
             if (age < 3) {
                 return "young";
             }

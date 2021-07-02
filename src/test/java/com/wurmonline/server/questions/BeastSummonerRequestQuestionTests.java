@@ -36,16 +36,16 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         }
     }
 
-    private String getFullName(SummonOption option, byte age, byte type) {
+    private String getFullName(SummonOption option, int age, byte type) {
         return getFullName(option, 1, age, type);
     }
 
-    private String getFullName(SummonOption option, int amount, byte age, byte type) {
+    private String getFullName(SummonOption option, int amount, int age, byte type) {
         return new SummonRequest.SummonRequestDetails(option, type, age, amount).nameWithoutAmount;
     }
 
     private String getFullNameWithAmountBML(SummonOption option, int amount) {
-        return getFullName(option, amount, (byte)0, (byte)0) + "\"};label{text=\"" + amount + "\"}";
+        return getFullName(option, amount, 0, (byte)0) + "\"};label{text=\"" + amount + "\"}";
     }
 
     private void setNextQuestion() {
@@ -65,6 +65,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
 
     private void remove(int index) {
         Properties properties = new Properties();
+        properties.setProperty("remove", "true");
         properties.setProperty("r" + index, "true");
         question.answer(properties);
         setNextQuestion();
@@ -85,7 +86,8 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
 
     private void selectOption(int index) {
         Properties properties = new Properties();
-        properties.setProperty("a" + index, "true");
+        properties.setProperty("add", "true");
+        properties.setProperty("a", String.valueOf(index));
         question.answer(properties);
         setNextQuestion();
     }
@@ -101,7 +103,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         selectOption(index);
     }
 
-    private void setOptionDetails(int amount, byte age, byte type) {
+    private void setOptionDetails(int amount, int age, byte type) {
         Properties properties = new Properties();
         properties.setProperty("amount", String.valueOf(amount));
         properties.setProperty("age", String.valueOf(age));
@@ -133,7 +135,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         factory.getCommunicator(player).clearBml();
-        setOptionDetails(1, (byte)0, (byte)0);
+        setOptionDetails(1, 0, (byte)0);
 
         assertThat(player, didNotReceiveBMLContaining("not currently able"));
     }
@@ -183,7 +185,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         int amount = 3;
-        byte age = 45;
+        int age = 45;
         setOptionDetails(amount, age, (byte)0);
         factory.getCommunicator(player).clearBml();
         add();
@@ -209,7 +211,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         int amount = 3;
-        byte age = 45;
+        int age = 45;
         setOptionDetails(amount, age, (byte)0);
         factory.getCommunicator(player).clearBml();
         add();
@@ -250,7 +252,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         int amount = 3;
-        byte age = 45;
+        int age = 45;
         setOptionDetails(amount, age, (byte)0);
         add();
         selectOption(0);
@@ -292,7 +294,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         int amount = 3;
-        byte age = 45;
+        int age = 45;
         setOptionDetails(amount, age, (byte)0);
         remove(0);
         submit();
@@ -311,7 +313,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         int amount = 3;
-        byte age = 45;
+        int age = 45;
         setOptionDetails(amount, age, (byte)0);
 
         assertThat(player, receivedBMLContaining("Current total - " + 15 + "i"));
@@ -325,7 +327,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         int amount = 3;
-        byte age = 45;
+        int age = 45;
         setOptionDetails(amount, age, (byte)0);
         add();
         selectOption(0);
@@ -475,7 +477,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         question = new BeastSummonerRequestQuestion(player, summoner);
         add();
         Properties properties = new Properties();
-        properties.setProperty("a123", "true");
+        properties.setProperty("a", "123");
         factory.getCommunicator(player).clearBml();
         question.answer(properties);
         setNextQuestion();
@@ -515,7 +517,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         int amount = 3;
-        byte age = 45;
+        int age = 45;
         setOptionDetails(amount, age, (byte)0);
 
         assertThat(player, receivedBMLContaining(getFullName(option, age, (byte)0)));
@@ -557,7 +559,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         factory.getCommunicator(player).clearBml();
-        setOptionDetails(-1, (byte)0, (byte)0);
+        setOptionDetails(-1, 0, (byte)0);
 
         assertThat(player, receivedBMLContaining(getFullNameWithAmountBML(option, 1)));
         new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
@@ -598,7 +600,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         factory.getCommunicator(player).clearBml();
-        setOptionDetails(option.cap + 1, (byte)0, (byte)0);
+        setOptionDetails(option.cap + 1, 0, (byte)0);
 
         assertThat(player, receivedBMLContaining(getFullNameWithAmountBML(option, option.cap)));
         new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
@@ -616,9 +618,9 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         factory.getCommunicator(player).clearBml();
-        setOptionDetails(1, (byte)-1, (byte)0);
+        setOptionDetails(1, -1, (byte)0);
 
-        assertThat(player, receivedBMLContaining(getFullName(option, (byte)0, (byte)0)));
+        assertThat(player, receivedBMLContaining(getFullName(option, 0, (byte)0)));
         new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
         assertThat(player, bmlNotEqual());
         assertThat(player, receivedMessageContaining("must be 0 or greater"));
@@ -641,7 +643,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         question.answer(properties);
         setNextQuestion();
 
-        assertThat(player, receivedBMLContaining(getFullName(option, (byte)0, (byte)0)));
+        assertThat(player, receivedBMLContaining(getFullName(option, 0, (byte)0)));
         new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
         assertThat(player, bmlNotEqual());
         assertThat(player, receivedMessageContaining("didn't understand the age"));
@@ -657,16 +659,19 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         factory.getCommunicator(player).clearBml();
-        setOptionDetails(1, (byte)1, (byte)0);
+        setOptionDetails(1, 1, (byte)0);
 
-        assertThat(player, receivedBMLContaining(getFullName(option, (byte)2, (byte)0)));
+        assertThat(player, receivedBMLContaining(getFullName(option, 2, (byte)0)));
         new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
         assertThat(player, bmlNotEqual());
         assertThat(player, receivedMessageContaining("must be 0 or greater than 2"));
     }
 
     @Test
-    void testAddToDetailsAgeAbove100() {
+    void testAddToDetailsAgeAboveMaxAge() throws NoSuchCreatureTemplateException, SQLException {
+        CreatureTemplate template = CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.PIG_CID);
+        assert template.getMaxAge() == 100;
+        db.addOption(summoner, template, 5, 6, Collections.emptySet());
         createOptions(getRandomTemplate(), getRandomTemplate(), 5);
         int currentCreatures = factory.getAllCreatures().size();
         SummonOption option = Objects.requireNonNull(db.getOptionsFor(summoner)).get(0);
@@ -675,12 +680,33 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         factory.getCommunicator(player).clearBml();
-        setOptionDetails(1, (byte)101, (byte)0);
+        setOptionDetails(1, 101, (byte)0);
 
-        assertThat(player, receivedBMLContaining(getFullName(option, (byte)100, (byte)0)));
+        assertThat(player, receivedBMLContaining(getFullName(option, 100, (byte)0)));
         new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
         assertThat(player, bmlNotEqual());
         assertThat(player, receivedMessageContaining("must be 100 or lower"));
+    }
+
+    @Test
+    void testAddToDetailsAgeAbove100ButBelowMaxAge() throws NoSuchCreatureTemplateException, SQLException {
+        CreatureTemplate template = CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.HELL_HORSE_CID);
+        assert template.getMaxAge() == 200;
+        db.addOption(summoner, template, 5, 6, Collections.emptySet());
+        createOptions(getRandomTemplate(), getRandomTemplate(), 5);
+        int currentCreatures = factory.getAllCreatures().size();
+        SummonOption option = Objects.requireNonNull(db.getOptionsFor(summoner)).get(0);
+
+        question = new BeastSummonerRequestQuestion(player, summoner);
+        add();
+        selectFirstOption();
+        factory.getCommunicator(player).clearBml();
+        setOptionDetails(1, 101, (byte)0);
+
+        assertThat(player, receivedBMLContaining(getFullName(option, 100, (byte)0)));
+        new BeastSummonerRequestQuestion(player, summoner).sendQuestion();
+        assertThat(player, bmlNotEqual());
+        assertThat(player, didNotReceiveMessageContaining("or lower"));
     }
 
     @Test
@@ -784,7 +810,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectOption(0);
         int amount = 3;
-        byte age = 45;
+        int age = 45;
         setOptionDetails(amount, age, (byte)0);
         submit();
 
@@ -805,7 +831,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectOption(0);
         int amount = 3;
-        byte age = 45;
+        int age = 45;
         setOptionDetails(amount, age, (byte)0);
         submit();
 
@@ -821,7 +847,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         assertEquals(currentCreatures + amount, factory.getAllCreatures().size());
         int count = 0;
         for (Creature creature : factory.getAllCreatures()) {
-            if (creature.getTemplate() == option.template && creature.getStatus().getModType() == (byte)0 && creature.getStatus().age == age - 1) {
+            if (creature.getTemplate() == option.template && creature.getStatus().getModType() == (byte)0 && creature.getStatus().age == age) {
                 ++count;
             }
         }
@@ -841,7 +867,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         factory.getCommunicator(player).clearBml();
-        setOptionDetails(1, (byte)0, (byte)99);
+        setOptionDetails(1, 0, (byte)99);
 
         assertThat(player, receivedBMLContaining("Current total - " + new Change((long)(price * modifier)).getChangeShortString()));
     }
@@ -857,7 +883,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         factory.getCommunicator(player).clearBml();
-        setOptionDetails(1, (byte)0, (byte)99);
+        setOptionDetails(1, 0, (byte)99);
 
         assertThat(player, receivedBMLContaining("Current total - " + new Change(price).getChangeShortString()));
     }
@@ -875,7 +901,7 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
         add();
         selectFirstOption();
         factory.getCommunicator(player).clearBml();
-        setOptionDetails(1, (byte)0, (byte)99);
+        setOptionDetails(1, 0, (byte)99);
 
         assertThat(player, receivedBMLContaining("Current total - " + new Change((long)(price * modifier)).getChangeShortString()));
     }

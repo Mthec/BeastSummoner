@@ -7,6 +7,7 @@ import com.wurmonline.server.questions.BeastSummonerRequestQuestion;
 import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerTemplate;
 import org.gotti.wurmunlimited.modsupport.actions.*;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,6 +38,12 @@ public class RequestAction implements ModAction, ActionPerformer, BehaviourProvi
     @Override
     public boolean action(Action action, Creature performer, Creature target, short num, float counter) {
         if (performer.isPlayer() && BeastSummonerTemplate.is(target)) {
+            target.turnTowardsCreature(performer);
+
+            try {
+                target.getStatus().savePosition(target.getWurmId(), false, target.getStatus().getZoneId(), true);
+            } catch (IOException ignored) {}
+
             new BeastSummonerRequestQuestion((Player)performer, target).sendQuestion();
         }
 

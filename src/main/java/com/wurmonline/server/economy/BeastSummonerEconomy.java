@@ -1,6 +1,5 @@
 package com.wurmonline.server.economy;
 
-
 import java.util.logging.Logger;
 
 public class BeastSummonerEconomy {

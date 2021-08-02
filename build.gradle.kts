@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "mod.wurmunlimited.npcs.beastsummoner"
-version = "0.1.1"
+version = "0.1.2"
 val shortName = "beastsummoner"
 val wurmServerFolder = "E:/Steam/steamapps/common/Wurm Unlimited/WurmServerLauncher/"
 

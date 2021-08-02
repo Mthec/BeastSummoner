@@ -1,6 +1,7 @@
 package com.wurmonline.server.questions;
 
 import com.wurmonline.server.creatures.Creature;
+import com.wurmonline.server.economy.BeastSummonerEconomy;
 import com.wurmonline.server.economy.Economy;
 import com.wurmonline.server.economy.Shop;
 import mod.wurmunlimited.bml.BML;
@@ -51,13 +52,14 @@ public class BeastSummonerManagementQuestion extends BeastSummonerPlaceOrManageQ
     public void sendQuestion() {
         Shop shop = Economy.getEconomy().getShop(summoner);
         if (shop == null) {
-            logger.warning("Summoner shop was null, please report.");
-            return;
+            logger.warning("Summoner shop was null.");
+            shop = BeastSummonerEconomy.findOrCreateShopFor(summoner.getWurmId());
         }
+        final Shop finalShop = shop;
 
         BML bml = new BMLBuilder(id).text("Sales:")
                           .table(new String[] { "This month", "Total" }, Collections.singletonList(1),
-                                  (v, b) -> b.label(String.valueOf(shop.getMoneyEarnedMonth())).label(String.valueOf(shop.getMoneyEarnedLife())))
+                                  (v, b) -> b.label(String.valueOf(finalShop.getMoneyEarnedMonth())).label(String.valueOf(finalShop.getMoneyEarnedLife())))
                           .newLine();
 
         getResponder().getCommunicator().sendBml(425, 350, true, true, endBML(middleBML(bml, getNameWithoutPrefix(summoner.getName())), currentTag, summoner), 200, 200, 200, title);

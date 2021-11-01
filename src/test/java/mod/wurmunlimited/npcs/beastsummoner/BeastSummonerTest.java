@@ -1,6 +1,7 @@
 package mod.wurmunlimited.npcs.beastsummoner;
 
 import com.wurmonline.server.Constants;
+import com.wurmonline.server.behaviours.CancelSetSpawnAction;
 import com.wurmonline.server.behaviours.PlaceBeastSummonerAction;
 import com.wurmonline.server.behaviours.PlaceNpcMenu;
 import com.wurmonline.server.creatures.Creature;
@@ -38,6 +39,7 @@ public abstract class BeastSummonerTest {
         factory = new BeastSummonerObjectsFactory();
 
         if (!init) {
+            new CancelSetSpawnAction();
             new PlaceBeastSummonerAction();
             menu = PlaceNpcMenu.register();
             init = true;

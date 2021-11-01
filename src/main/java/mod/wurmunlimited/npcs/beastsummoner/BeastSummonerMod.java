@@ -22,10 +22,7 @@ import org.gotti.wurmunlimited.modsupport.creatures.ModCreatures;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, PlayerMessageListener, PreInitable, ServerStartedListener {
@@ -40,6 +37,7 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
     public ModelSetter modelSetter;
     public static String namePrefix = "Beast_Summoner";
     public static int minimumPrice = 0;
+    public static boolean allowBlockedTypes = true;
     private final CommandWaitTimer dumpLoadTagsTimer = new CommandWaitTimer(TimeConstants.MINUTE_MILLIS / 2);
 
     public BeastSummonerMod() {
@@ -81,7 +79,7 @@ public class BeastSummonerMod implements WurmServerMod, Configurable, Initable, 
             }
             priceModifiers.put(type.first, modifier);
         }
-        namePrefix = properties.getProperty("name_prefix", namePrefix);
+        allowBlockedTypes = Objects.equals(properties.getProperty("restrict_types"), "false");
     }
 
     @Override

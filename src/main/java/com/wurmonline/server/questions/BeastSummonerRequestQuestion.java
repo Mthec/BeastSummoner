@@ -11,10 +11,7 @@ import mod.wurmunlimited.npcs.beastsummoner.BeastSummonerMod;
 import mod.wurmunlimited.npcs.beastsummoner.SummonOption;
 import mod.wurmunlimited.npcs.beastsummoner.SummonerProfile;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension {
@@ -95,7 +92,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                     summoner.getCommunicator().sendStartTrading(responder);
                     responder.getCommunicator().sendStartTrading(summoner);
                     //noinspection ConstantConditions
-                    BeastSummonerTradeHandler handler = (BeastSummonerTradeHandler)summoner.getTradeHandler();
+                    BeastSummonerTradeHandler handler = Objects.requireNonNull((BeastSummonerTradeHandler)summoner.getTradeHandler());
                     for (SummonRequest.SummonRequestDetails details : summons) {
                         handler.createTradeItem(profile, details.name, details.price);
                     }
@@ -259,7 +256,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                          .harray(b -> b.label("Age (" + (maxAge == 2 ? "2" : "2-" + maxAge) + "): ").entry("age", "", 3).label("Blank for random."))
                          .text("Be aware, the older the beast the greater the chance they will die of old age before you can defeat them!").italic()
                          .label("Creature type:")
-                         .If(creatureTypes.length == 0 || (!option.template.hasDen() && !option.template.isRiftCreature()),
+                         .If(creatureTypes.length == 0 || !BeastSummonerMod.allowBlockedTypes && !option.template.hasDen() && !option.template.isRiftCreature(),
                                  b -> b.radio("type", "0", "No modifier", true),
                                  b -> {
                                      b = b.raw("table{rows=\"" + creatureTypes.length + "\";cols=\"3\";");
@@ -287,7 +284,7 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
     }
 
     private String getTypeString(SummonOption option) {
-        if (!option.template.hasDen() && !option.template.isRiftCreature()) {
+        if (!BeastSummonerMod.allowBlockedTypes && !option.template.hasDen() && !option.template.isRiftCreature()) {
             return "None";
         }
         int size = option.allowedTypes.size();

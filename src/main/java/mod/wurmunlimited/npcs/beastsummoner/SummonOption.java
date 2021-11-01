@@ -88,7 +88,7 @@ public class SummonOption {
                 }
 
                 byte creType = 0;
-                if (allowedTypes.contains(creatureType) && (template.hasDen() || template.isRiftCreature())) {
+                if (allowedTypes.contains(creatureType) && (BeastSummonerMod.allowBlockedTypes || template.hasDen() || template.isRiftCreature())) {
                     creType = creatureType;
                 }
 

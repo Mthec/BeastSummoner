@@ -428,12 +428,26 @@ public class BeastSummonerRequestQuestionTests extends BeastSummonerListTest {
 
     @Test
     void testTypeColumnOneNotHasDen() throws SQLException, NoSuchCreatureTemplateException {
+        assert !BeastSummonerMod.allowBlockedTypes;
         db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.ANACONDA_CID), 1, 2, Collections.singleton((byte)5));
 
         question = new BeastSummonerRequestQuestion(player, summoner);
         add();
 
         assertThat(player, receivedBMLContaining("label{text=\"2\"};label{text=\"None\"}"));
+    }
+
+    @Test
+    void testTypeColumnOneNotHasDenUnrestrictedTypes() throws SQLException, NoSuchCreatureTemplateException {
+        Properties properties = new Properties();
+        properties.setProperty("restrict_types", "false");
+        BeastSummonerMod.mod.configure(properties);
+        db.addOption(summoner, CreatureTemplateFactory.getInstance().getTemplate(CreatureTemplateIds.ANACONDA_CID), 1, 2, Collections.singleton((byte)5));
+
+        question = new BeastSummonerRequestQuestion(player, summoner);
+        add();
+
+        assertThat(player, receivedBMLContaining("label{text=\"2\"};label{text=\"Alert\"}"));
     }
 
     @Test

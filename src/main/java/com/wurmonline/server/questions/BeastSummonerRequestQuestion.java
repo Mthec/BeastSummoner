@@ -91,12 +91,16 @@ public class BeastSummonerRequestQuestion extends BeastSummonerQuestionExtension
                     summoner.setTrade(trade);
                     summoner.getCommunicator().sendStartTrading(responder);
                     responder.getCommunicator().sendStartTrading(summoner);
-                    //noinspection ConstantConditions
-                    BeastSummonerTradeHandler handler = Objects.requireNonNull((BeastSummonerTradeHandler)summoner.getTradeHandler());
-                    for (SummonRequest.SummonRequestDetails details : summons) {
-                        handler.createTradeItem(profile, details.name, details.price);
+                    try {
+                        //noinspection ConstantConditions
+                        BeastSummonerTradeHandler handler = Objects.requireNonNull((BeastSummonerTradeHandler)summoner.getTradeHandler());
+                        for (SummonRequest.SummonRequestDetails details : summons) {
+                            handler.createTradeItem(profile, details.name, details.price);
+                        }
+                        handler.addItemsToTrade();
+                    } catch (NullPointerException e) {
+                        responder.getCommunicator().sendAlertServerMessage("Beast Summoner Trade aborted, please see server log.");
                     }
-                    handler.addItemsToTrade();
                 } else if (wasSelected("remove")) {
                     for (int i = 0; i < summons.size(); i++) {
                         String property = answers.getProperty("r" + i);

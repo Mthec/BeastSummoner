@@ -25,8 +25,8 @@ public class BeastSummonerTradeHandlerCoins extends BeastSummonerTradeHandler {
 
                 int diff = Arrays.stream(sellWindow.getAllItems()).mapToInt(i -> getTraderSellPriceForItem(i, sellWindow)).sum() -
                                    Arrays.stream(requestWindow.getAllItems()).mapToInt(Item::getValue).sum();
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.finest("diff is " + diff);
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("diff is " + diff);
                 }
 
                 if (diff > 0L) {

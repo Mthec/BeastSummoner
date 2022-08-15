@@ -3,9 +3,14 @@ package com.wurmonline.server.economy;
 import com.wurmonline.server.DbConnector;
 import com.wurmonline.server.creatures.Creatures;
 import com.wurmonline.server.creatures.NoSuchCreatureException;
+import org.gotti.wurmunlimited.modloader.ReflectionUtil;
+import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
+import org.gotti.wurmunlimited.modloader.classhooks.InvocationHandlerFactory;
+import org.gotti.wurmunlimited.modloader.classhooks.InvocationTarget;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -23,7 +28,29 @@ public class BeastSummonerEconomy {
             for (Shop shop : Economy.getEconomy().getShops()) {
                 if (shop.wurmid == wurmId) {
                     if (getShop == null) {
-                        logger.warning("Shop exists in getShops(), but cannot get via getShop().");
+                        try {
+                            StringBuilder sb = new StringBuilder();
+                            sb.append("Shop exists in getShops(), but cannot get via getShop().");
+                            Map<String, InvocationTarget> targets = ReflectionUtil.getPrivateField(HookManager.getInstance(), HookManager.class.getDeclaredField("invocationTargets"));
+                            for (String target : targets.keySet()) {
+                                if (target.startsWith("com.wurmonline.server.economy.Economy.getShop")) {
+                                    sb.append("\n");
+                                    InvocationTarget t = targets.get(target);
+                                    if (t == null) {
+                                        sb.append("null");
+                                    } else {
+                                        InvocationHandlerFactory factory = ReflectionUtil.getPrivateField(t, InvocationTarget.class.getDeclaredField("invocationHandlerFactory"));
+                                        sb.append(factory.getClass().getName());
+                                    }
+                                }
+                            }
+
+                            logger.warning(sb.toString());
+                        } catch (NoSuchFieldException | IllegalAccessException e) {
+                            logger.warning("Shop exists in getShops(), but cannot get via getShop().  Invocation field error:");
+                            e.printStackTrace();
+                        }
+
                         return shop;
                     } else {
                         logger.info("Shop exists in getShops(), and via getShop().");

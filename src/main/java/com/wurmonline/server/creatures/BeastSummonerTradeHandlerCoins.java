@@ -14,6 +14,10 @@ public class BeastSummonerTradeHandlerCoins extends BeastSummonerTradeHandler {
         super(summoner, trade);
     }
 
+    BeastSummonerTradeHandlerCoins(Creature summoner) {
+        super(summoner);
+    }
+
     @Override
     void balance() {
         if (!balanced) {

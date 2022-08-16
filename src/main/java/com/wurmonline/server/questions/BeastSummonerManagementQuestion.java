@@ -52,7 +52,6 @@ public class BeastSummonerManagementQuestion extends BeastSummonerPlaceOrManageQ
     public void sendQuestion() {
         Shop shop = Economy.getEconomy().getShop(summoner);
         if (shop == null) {
-            logger.warning("Summoner shop was null.");
             shop = BeastSummonerEconomy.findOrCreateShopFor(summoner.getWurmId());
         }
         final Shop finalShop = shop;

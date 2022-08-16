@@ -34,17 +34,13 @@ public class BeastSummonerEconomy {
                             Map<String, InvocationTarget> targets = ReflectionUtil.getPrivateField(HookManager.getInstance(), HookManager.class.getDeclaredField("invocationTargets"));
                             for (String target : targets.keySet()) {
                                 if (target.startsWith("com.wurmonline.server.economy.Economy.getShop")) {
+                                    sb.append("\n");
                                     InvocationTarget t = targets.get(target);
                                     if (t == null) {
-                                        sb.append("\nnull");
+                                        sb.append("null");
                                     } else {
                                         InvocationHandlerFactory factory = ReflectionUtil.getPrivateField(t, InvocationTarget.class.getDeclaredField("invocationHandlerFactory"));
-                                        String name = factory.getClass().getName();
-
-                                        if (!name.startsWith("mod.wurmunlimited.npcs")) {
-                                            sb.append("\n");
-                                            sb.append(name);
-                                        }
+                                        sb.append(factory.getClass().getName());
                                     }
                                 }
                             }

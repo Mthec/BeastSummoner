@@ -15,10 +15,6 @@ public class BeastSummonerTradeHandlerCurrency extends BeastSummonerTradeHandler
         super(summoner, trade);
     }
 
-    BeastSummonerTradeHandlerCurrency(Creature summoner) {
-        super(summoner);
-    }
-
     @Override
     public void createTradeItem(SummonerProfile profile, String summonName, int price) {
         super.createTradeItem(profile, summonName, price);
